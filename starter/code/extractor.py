@@ -1,7 +1,7 @@
 """
 LLM Data Extraction Service for the onboarding automation system.
 
-Sends unstructured intake data to the Groq API (using the Qwen 3.6 27B model)
+Sends unstructured intake data to the Groq API (using the Llama 3.3 70B model)
 and extracts structured employee profiles in JSON format. Includes defensive
 checks for API connection failures and malformed JSON responses.
 """

@@ -22,4 +22,4 @@ tests/test_workflow.py::test_list_records PASSED                         [100%]
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-======================== 10 passed, 1 warning in 1.09s =========================
+======================== 10 passed, 1 warning in 1.17s =========================

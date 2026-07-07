@@ -9,6 +9,8 @@ In mid-sized enterprises (500–2,000 employees), employee onboarding is histori
 
 This technical design outlines a hybrid automation architecture using a self-hosted **n8n v2.x** orchestration engine integrated with stateful record-keeping systems (such as Airtable or BambooHR) and advanced multimodal Large Language Models (LLMs). The core intent is to automate document ingestion, clean intake data, dynamically provision workspace access, and synthesize highly personalized 30/60/90-day roadmaps while maintaining strict regulatory compliance (under CCPA/CPRA, GDPR, Illinois IHRA, and the EU AI Act) and ensuring enterprise-grade fault tolerance.
 
+**FastAPI Python Prototype Demo:** To validate the core orchestration logic, schema parsing, routing decisions, and personalized plan synthesis, a local functional prototype has been implemented in Python using FastAPI (located in `starter/code/`). The prototype utilizes Groq's API (model: `llama-3.3-70b-versatile`) to perform field extraction and onboarding plan generation.
+
 ---
 
 ### 2. Step-by-Step Workflow Logic

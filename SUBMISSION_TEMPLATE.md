@@ -2,7 +2,7 @@
 
 ## Candidate Information
 - Full Name: Hafiz Muhammad Ibrahim Salman
-- Email: hafiz.muhammad.ibrahim.salman@gmail.com
+- Email: ibrahim.pk848@gmail.com
 - LinkedIn or Portfolio: https://linkedin.com/in/ibrahim-salman
 - Submission Date: July 7, 2026
 

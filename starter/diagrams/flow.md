@@ -12,7 +12,7 @@ flowchart TD
     classDef ext fill:#422a1d,stroke:#a15c38,stroke-width:1.5px,color:#ffcb6b;
     classDef state fill:#3d1b32,stroke:#7d2d64,stroke-width:1.5px,color:#f07178;
 
-    A[Intake Webhook Trigger]:::trigger --> B[AI Document Extractor<br/>Qwen 3.6 27B on Groq]:::ai
+    A[Intake Webhook Trigger]:::trigger --> B[AI Document Extractor<br/>Llama 3.3 70B on Groq]:::ai
     B --> C[Run Javascript Code Sanitizer<br/>Regex & Field Length Checks]:::logic
     C --> D{Confidence & Validity Check:<br/>score >= 0.80 & no issues?}:::logic
     

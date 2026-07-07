@@ -14,7 +14,7 @@ load_dotenv()
 # ── Groq / LLM Settings ─────────────────────────────────────────────────────
 GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE_URL: str = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
-MODEL_NAME: str = os.getenv("MODEL_NAME", "qwen/qwen3.6-27b")
+MODEL_NAME: str = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
 
 # ── Business-Rule Thresholds ────────────────────────────────────────────────
 CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.80"))
