@@ -77,7 +77,8 @@ For more details, see: [starter/design-solution.md](file:///mnt/c/Users/hafiz/Ta
 7.  [starter/code/validator.py](file:///mnt/c/Users/hafiz/Task1_interview/enterprise-ai-onboarding-automation/starter/code/validator.py) - Verification and routing logic.
 8.  [starter/code/roadmap.py](file:///mnt/c/Users/hafiz/Task1_interview/enterprise-ai-onboarding-automation/starter/code/roadmap.py) - Onboarding plan generator.
 9.  [starter/code/audit_log.py](file:///mnt/c/Users/hafiz/Task1_interview/enterprise-ai-onboarding-automation/starter/code/audit_log.py) - Audit trail database.
-10. [starter/code/tests/test_workflow.py](file:///mnt/c/Users/hafiz/Task1_interview/enterprise-ai-onboarding-automation/starter/code/tests/test_workflow.py) - Full integration test suite.
+10. [starter/code/demo_runner.py](file:///mnt/c/Users/hafiz/Task1_interview/enterprise-ai-onboarding-automation/starter/code/demo_runner.py) - Runnable end-to-end sandbox simulator.
+11. [starter/code/tests/test_workflow.py](file:///mnt/c/Users/hafiz/Task1_interview/enterprise-ai-onboarding-automation/starter/code/tests/test_workflow.py) - Full integration test suite.
 
 ### Flow of Data
 *   **Intake Payload:** Webhook trigger passes raw intake text/metadata to the `/intake` FastAPI route.
@@ -119,6 +120,10 @@ To run the python backend prototype locally:
 4.  **Execute automated test suite:**
     ```bash
     pytest -v
+    ```
+5.  **Run end-to-end sandbox demo:**
+    ```bash
+    python3 demo_runner.py
     ```
 
 ### 2. Deploying the n8n Orchestrator Workflow
