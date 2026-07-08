@@ -53,3 +53,4 @@ else:
 # ── Notifications & IT ──────────────────────────────────────────────────────
 IT_EMAIL: str = os.getenv("IT_EMAIL", "it@company.com")
 HR_EMAIL: str = os.getenv("HR_EMAIL", "hr@company.com")
+FROM_EMAIL: str = os.getenv("FROM_EMAIL", "onboarding@resend.dev")

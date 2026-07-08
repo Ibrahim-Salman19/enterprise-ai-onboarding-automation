@@ -12,7 +12,7 @@ import re
 import os
 import html
 from datetime import datetime
-from config import SLACK_WEBHOOK_URL, RESEND_API_KEY, IT_EMAIL, HR_EMAIL
+from config import SLACK_WEBHOOK_URL, RESEND_API_KEY, IT_EMAIL, HR_EMAIL, FROM_EMAIL
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ def _send_resend_email(to_email: str, subject: str, html: str) -> str:
         resend.api_key = RESEND_API_KEY
         try:
             params = {
-                "from": "onboarding@resend.dev",
+                "from": FROM_EMAIL,
                 "to": [to_email],
                 "subject": subject,
                 "html": html
