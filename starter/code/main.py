@@ -177,9 +177,13 @@ def _process_intake_logic(
         notifs = {}
         try:
             notifs.update(notify.send_all_notifications(record, "intake"))
+        except Exception as e:
+            print(f"Flaky Intake Notification Interruption: {e}")
+            
+        try:
             notifs.update(notify.send_all_notifications(record, "approved"))
         except Exception as e:
-            print(f"Flaky Notification Interruption: {e}")
+            print(f"Flaky Approved Notification Interruption: {e}")
             
         record["notifications_sent"] = notifs
         

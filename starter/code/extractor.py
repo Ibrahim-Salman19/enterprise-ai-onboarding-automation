@@ -10,6 +10,7 @@ JSON responses.
 import json
 import logging
 from openai import OpenAI, APIError, APIConnectionError, RateLimitError, APITimeoutError
+from pydantic import ValidationError
 from config import MODEL_NAME, GROQ_API_KEY, GROQ_BASE_URL, MODEL_MAX_TOKENS
 from schemas import ExtractedEmployee
 
@@ -87,7 +88,7 @@ def extract_fields(raw_text: str, client: OpenAI = None) -> dict:
             # Reached if parsing somehow returned None or structured output failed
             raise ValueError("Structured output parsing returned None.")
 
-    except (APIError, APIConnectionError, RateLimitError, APITimeoutError, ValueError) as e:
+    except (APIError, APIConnectionError, RateLimitError, APITimeoutError, ValueError, ValidationError) as e:
         logger.exception(f"External LLM API call encountered an error: {e}")
         return {
             "name": "",

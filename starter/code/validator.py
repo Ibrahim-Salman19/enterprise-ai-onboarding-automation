@@ -33,22 +33,27 @@ def validate_extracted_data(data: dict) -> tuple[bool, list[str]]:
             issues.append(f"Missing required field: {field}")
 
     # 2. Name validation (minimum length 2)
-    name = data.get("name", "")
-    if name and len(name.strip()) < 2:
-        issues.append("Name must be at least 2 characters.")
+    name = data.get("name")
+    if name:
+        name_str = str(name).strip()
+        if len(name_str) < 2:
+            issues.append("Name must be at least 2 characters.")
 
     # 3. Email format verification
-    email = data.get("email", "")
-    if email and not EMAIL_REGEX.match(email.strip()):
-        issues.append(f"Invalid email format: '{email}'")
+    email = data.get("email")
+    if email:
+        email_str = str(email).strip()
+        if not EMAIL_REGEX.match(email_str):
+            issues.append(f"Invalid email format: '{email_str}'")
 
     # 4. Start date format (YYYY-MM-DD)
-    start_date = data.get("start_date", "")
+    start_date = data.get("start_date")
     if start_date:
+        start_date_str = str(start_date).strip()
         try:
-            datetime.strptime(start_date.strip(), "%Y-%m-%d")
+            datetime.strptime(start_date_str, "%Y-%m-%d")
         except ValueError:
-            issues.append(f"Invalid start_date format '{start_date}'; must be YYYY-MM-DD")
+            issues.append(f"Invalid start_date format '{start_date_str}'; must be YYYY-MM-DD")
 
     return (len(issues) == 0), issues
 

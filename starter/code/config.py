@@ -7,6 +7,7 @@ Uses python-dotenv to support .env files for local development.
 
 import os
 import secrets
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load .env file if present (no-op in production where env vars are set directly)
@@ -23,7 +24,7 @@ MODEL_NAME: str = os.getenv("MODEL_NAME", "openai/gpt-oss-120b")
 # Reasoning models (gpt-oss family) emit hidden reasoning tokens before the visible answer,
 # so the completion budget must be large enough to cover both. Reserved for use in
 # extractor.py / roadmap.py when calling the API.
-MODEL_MAX_TOKENS: int = int(os.getenv("MODEL_MAX_TOKENS", "1024"))
+MODEL_MAX_TOKENS: int = int(os.getenv("MODEL_MAX_TOKENS", "4096"))
 
 # ── Business-Rule Thresholds ────────────────────────────────────────────────
 CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.80"))
@@ -34,7 +35,20 @@ RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
 
 # ── Security & Auth ─────────────────────────────────────────────────────────
 ADMIN_PIN: str = os.getenv("ADMIN_PIN", "1234")
-JWT_SECRET: str = os.getenv("JWT_SECRET") or secrets.token_urlsafe(32)
+
+_jwt_env = os.getenv("JWT_SECRET")
+if _jwt_env:
+    JWT_SECRET: str = _jwt_env
+else:
+    _secret_file = Path(__file__).parent / ".jwt_secret"
+    if _secret_file.exists():
+        JWT_SECRET: str = _secret_file.read_text(encoding="utf-8").strip()
+    else:
+        JWT_SECRET: str = secrets.token_urlsafe(32)
+        try:
+            _secret_file.write_text(JWT_SECRET, encoding="utf-8")
+        except Exception:
+            pass
 
 # ── Notifications & IT ──────────────────────────────────────────────────────
 IT_EMAIL: str = os.getenv("IT_EMAIL", "it@company.com")

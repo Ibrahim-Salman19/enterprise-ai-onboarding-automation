@@ -53,6 +53,9 @@ def append_audit(
             "model_version": model_version,
             "override": override,
         }
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 
@@ -86,5 +89,8 @@ def clear_audit_log() -> None:
     try:
         db.query(AuditEntry).delete()
         db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

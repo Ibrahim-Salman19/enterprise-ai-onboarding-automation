@@ -331,6 +331,13 @@ function authFetch(url, options) {
       logout();
       throw new Error("Unauthorized");
     }
+    if (!r.ok) {
+      return r.json().then(function(err) {
+        throw new Error(err.detail || "Server error");
+      }).catch(function() {
+        throw new Error("Server error " + r.status);
+      });
+    }
     return r;
   });
 }

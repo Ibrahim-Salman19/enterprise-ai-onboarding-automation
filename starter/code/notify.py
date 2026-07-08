@@ -109,14 +109,46 @@ def _send_resend_email(to_email: str, subject: str, html: str) -> str:
 def md_to_html(md_text: str) -> str:
     if not md_text:
         return ""
+    # Safe escape
     h = md_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    h = re.sub(r"^### (.*)$", r"<h3>\1</h3>", h, flags=re.M)
-    h = re.sub(r"^## (.*)$", r"<h2>\1</h2>", h, flags=re.M)
-    h = re.sub(r"^# (.*)$", r"<h1>\1</h1>", h, flags=re.M)
+    
+    # Inline formatting (bold and code)
     h = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", h)
     h = re.sub(r"`([^`]+)`", r"<code>\1</code>", h)
-    h = h.replace("\n\n", "</p><p>").replace("\n", "<br>")
-    return f"<p>{h}</p>"
+
+    # Process blocks
+    blocks = h.split("\n\n")
+    html_blocks = []
+    
+    for block in blocks:
+        block = block.strip()
+        if not block:
+            continue
+        
+        # Check for Headers
+        if block.startswith("### "):
+            html_blocks.append(f"<h3>{block[4:]}</h3>")
+        elif block.startswith("## "):
+            html_blocks.append(f"<h2>{block[3:]}</h2>")
+        elif block.startswith("# "):
+            html_blocks.append(f"<h1>{block[2:]}</h1>")
+        # Check for list items
+        elif block.startswith("- ") or block.startswith("* "):
+            lines = block.split("\n")
+            list_items = []
+            for line in lines:
+                line = line.strip()
+                if line.startswith("- ") or line.startswith("* "):
+                    list_items.append(f"<li>{line[2:]}</li>")
+                elif line:
+                    list_items.append(line)
+            html_blocks.append(f"<ul>{''.join(list_items)}</ul>")
+        else:
+            # Paragraph with line breaks
+            para = block.replace("\n", "<br>")
+            html_blocks.append(f"<p>{para}</p>")
+            
+    return "\n".join(html_blocks)
 
 
 # --- Slack Messages ---

@@ -47,6 +47,9 @@ def save_record(record_id: str, record_data: dict) -> None:
         record.updated_at = record_data.get("updated_at")
         
         db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 
@@ -89,6 +92,9 @@ def clear_store() -> None:
     try:
         db.query(OnboardingRecord).delete()
         db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 
