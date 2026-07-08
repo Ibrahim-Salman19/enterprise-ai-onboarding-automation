@@ -14,83 +14,98 @@ from fastapi.testclient import TestClient
 from main import app, get_llm_client_dependency
 import review_store
 import audit_log
+import auth
+from schemas import ExtractedEmployee, OnboardingPlan, RoadmapSection
 
 
 # ── Mock LLM Client Setup ───────────────────────────────────────────────────
 class MockChatCompletions:
     def __init__(self):
-        self.default_extraction = {
-            "name": "Ayesha Raza",
-            "email": "ayesha.raza@gmail.com",
-            "role": "Backend Engineer",
-            "department": "Engineering",
-            "manager": "Sarah Chen",
-            "start_date": "2026-07-15",
-            "confidence_score": 0.95,
-            "missing_fields": []
-        }
+        # Default high-confidence extraction response
+        self.default_extraction = ExtractedEmployee(
+            name="Ayesha Raza",
+            email="ayesha.raza@gmail.com",
+            role="Backend Engineer",
+            department="Engineering",
+            manager="Sarah Chen",
+            start_date="2026-07-15",
+            confidence_score=0.95,
+            missing_fields=[]
+        )
         
-        self.low_confidence_extraction = {
-            "name": "John Doe",
-            "email": "invalid-email",
-            "role": "Analyst",
-            "department": "Unknown",
-            "manager": "",
-            "start_date": "bad-date",
-            "confidence_score": 0.45,
-            "missing_fields": ["email", "manager", "start_date"]
-        }
-
-        self.roadmap_response = (
-            "# Welcome to the Team, Onboardee!\n\n"
-            "## 30-Day Focus (Integration & Learning)\n"
-            "- Set up GitHub, AWS Console, and local dev environments.\n"
-            "- Complete Code Review Standards module.\n\n"
-            "## 60-Day Focus (Collaboration & Small Wins)\n"
-            "- Shadow process sessions and pick up initial starter tickets.\n\n"
-            "## 90-Day Focus (Independence & Contribution)\n"
-            "- Assume full ownership of assigned backend microservices."
+        # Default low-confidence extraction response
+        self.low_confidence_extraction = ExtractedEmployee(
+            name="John Doe",
+            email="invalid-email",
+            role="Analyst",
+            department="Unknown",
+            manager="",
+            start_date="bad-date",
+            confidence_score=0.45,
+            missing_fields=["email", "manager", "start_date"]
         )
 
-    def create(self, **kwargs):
-        messages = kwargs.get("messages", [])
-        is_extraction = False
-        for msg in messages:
-            if "extract" in msg.get("content", "").lower() or "verify" in msg.get("content", "").lower():
-                is_extraction = True
+        self.roadmap_response = OnboardingPlan(
+            welcome_message="Welcome to the Team, Onboardee!",
+            day_30=RoadmapSection(title="30-Day Focus (Integration & Learning)", details="- Learn systems."),
+            day_60=RoadmapSection(title="60-Day Focus", details="- Small wins."),
+            day_90=RoadmapSection(title="90-Day Focus", details="- Independence."),
+            key_contacts=["Manager", "Buddy"]
+        )
 
+    def parse(self, **kwargs):
+        """Mock the ChatCompletions.parse method."""
+        messages = kwargs.get("messages", [])
+        response_format = kwargs.get("response_format")
+        
+        # Extract user input message text
         user_msg = ""
         for msg in messages:
             if msg.get("role") == "user":
                 user_msg = msg.get("content", "")
 
-        if is_extraction:
-            if "bad" in user_msg.lower() or "broken" in user_msg.lower() or "anomaly" in user_msg.lower():
-                content = json.dumps(self.low_confidence_extraction)
+        # Compute output content
+        if response_format == ExtractedEmployee:
+            if "anomaly" in user_msg.lower() or "bad data" in user_msg.lower() or "invalid" in user_msg.lower():
+                parsed = self.low_confidence_extraction
             else:
-                content = json.dumps(self.default_extraction)
+                parsed = self.default_extraction
+        elif response_format == OnboardingPlan:
+            parsed = self.roadmap_response
         else:
-            content = self.roadmap_response
+            parsed = None
 
+        # Build Mock API response structure
         mock_choice = MagicMock()
-        mock_choice.message.content = content
+        mock_choice.message.parsed = parsed
         mock_response = MagicMock()
         mock_response.choices = [mock_choice]
         return mock_response
 
 
-class MockOpenAIClient:
+class MockBetaChat:
     def __init__(self):
+        self.completions = MockChatCompletions()
+
+class MockBeta:
+    def __init__(self):
+        self.chat = MockBetaChat()
+
+class MockOpenAIClient:
+    """Mock for OpenAI client class."""
+    def __init__(self):
+        self.beta = MockBeta()
         self.chat = MagicMock()
         self.chat.completions = MockChatCompletions()
 
 
-# Apply dependency override
+# Apply dependency overrides
 def override_dependency():
     return MockOpenAIClient()
 
 
 app.dependency_overrides[get_llm_client_dependency] = override_dependency
+app.dependency_overrides[auth.get_current_admin] = lambda: "mock_admin_token"
 client = TestClient(app)
 
 # Reset stores

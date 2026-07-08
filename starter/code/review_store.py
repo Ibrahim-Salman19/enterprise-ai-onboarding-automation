@@ -92,3 +92,27 @@ def clear_store() -> None:
         db.commit()
     finally:
         db.close()
+
+def get_stats() -> dict:
+    """Return aggregated statistics of the records."""
+    all_records = list_records()
+    stats = {
+        "total": len(all_records),
+        "pending_review": 0,
+        "approved": 0,
+        "rejected": 0,
+        "auto_approved": 0,
+        "by_department": {}
+    }
+    
+    for r in all_records:
+        status = r.get("status", "unknown")
+        if status in stats:
+            stats[status] += 1
+            
+        dept = r.get("extracted_data", {}).get("department", "Unknown")
+        if dept not in stats["by_department"]:
+            stats["by_department"][dept] = 0
+        stats["by_department"][dept] += 1
+        
+    return stats

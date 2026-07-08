@@ -26,6 +26,12 @@ _ROLE_CONTEXTS: dict[str, dict[str, Any]] = {
             "Architecture Decision Records",
         ],
         "buddy_program": True,
+        "manager_slack_handle": "@sarah.chen",
+        "it_channel": "#it-provisioning",
+        "announcements_channel": "#new-joiners",
+        "manager_email": "sarah.chen@company.com",
+        "default_buddy_pool": ["Alex Dev", "Jamie Coder"],
+        "hardware_provisioning": "MacBook Pro M3 Max 32GB"
     },
     "Marketing": {
         "manager_name": "James Rodriguez",
@@ -44,6 +50,12 @@ _ROLE_CONTEXTS: dict[str, dict[str, Any]] = {
             "Analytics & Reporting",
         ],
         "buddy_program": True,
+        "manager_slack_handle": "@james.r",
+        "it_channel": "#it-provisioning",
+        "announcements_channel": "#new-joiners",
+        "manager_email": "james.rodriguez@company.com",
+        "default_buddy_pool": ["Casey Marketer", "Sam Writer"],
+        "hardware_provisioning": "MacBook Air M3 16GB"
     },
     "Finance": {
         "manager_name": "Priya Patel",
@@ -62,6 +74,12 @@ _ROLE_CONTEXTS: dict[str, dict[str, Any]] = {
             "Quarter-End Close Procedures",
         ],
         "buddy_program": False,
+        "manager_slack_handle": "@priya.p",
+        "it_channel": "#it-provisioning",
+        "announcements_channel": "#new-joiners",
+        "manager_email": "priya.patel@company.com",
+        "default_buddy_pool": [],
+        "hardware_provisioning": "ThinkPad T14 Gen 4"
     },
     "Human Resources": {
         "manager_name": "Michael Thompson",
@@ -80,6 +98,12 @@ _ROLE_CONTEXTS: dict[str, dict[str, Any]] = {
             "Performance Review Framework",
         ],
         "buddy_program": True,
+        "manager_slack_handle": "@michael.t",
+        "it_channel": "#it-provisioning",
+        "announcements_channel": "#new-joiners",
+        "manager_email": "michael.thompson@company.com",
+        "default_buddy_pool": ["Taylor HR", "Jordan Ops"],
+        "hardware_provisioning": "ThinkPad T14 Gen 4"
     },
 }
 
@@ -98,6 +122,12 @@ _DEFAULT_CONTEXT: dict[str, Any] = {
         "Code of Conduct",
     ],
     "buddy_program": True,
+    "manager_slack_handle": "@manager",
+    "it_channel": "#it-provisioning",
+    "announcements_channel": "#new-joiners",
+    "manager_email": "manager@company.com",
+    "default_buddy_pool": ["Default Buddy"],
+    "hardware_provisioning": "Standard Laptop Provisioning"
 }
 
 

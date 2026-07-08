@@ -30,3 +30,11 @@ CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.80"))
 # ── Integrations ────────────────────────────────────────────────────────────
 SLACK_WEBHOOK_URL: str = os.getenv("SLACK_WEBHOOK_URL", "")
 RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+
+# ── Security & Auth ─────────────────────────────────────────────────────────
+ADMIN_PIN: str = os.getenv("ADMIN_PIN", "1234")
+JWT_SECRET: str = os.getenv("JWT_SECRET", "super-secret-jwt-key-2026")
+
+# ── Notifications & IT ──────────────────────────────────────────────────────
+IT_EMAIL: str = os.getenv("IT_EMAIL", "it@company.com")
+HR_EMAIL: str = os.getenv("HR_EMAIL", "hr@company.com")

@@ -4,159 +4,231 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Employee Onboarding Portal</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
           colors: {
             background: '#09090b',
             foreground: '#fafafa',
             card: '#18181b',
-            'card-foreground': '#fafafa',
             border: '#27272a',
-            input: '#27272a',
             primary: '#fafafa',
-            'primary-foreground': '#18181b',
+            'primary-foreground': '#09090b',
             muted: '#27272a',
             'muted-foreground': '#a1a1aa',
-            accent: '#27272a',
-            'accent-foreground': '#fafafa',
-            ring: '#d4d4d8',
-          },
-          borderRadius: {
-            lg: '0.5rem',
-            md: 'calc(0.5rem - 2px)',
-            sm: 'calc(0.5rem - 4px)'
           }
         }
       }
     }
   </script>
   <style>
-    body { background-color: theme('colors.background'); color: theme('colors.foreground'); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: theme('colors.background'); color: theme('colors.foreground'); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: theme('colors.background'); }
+    ::-webkit-scrollbar-thumb { background: theme('colors.border'); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #52525b; }
     .glass-card {
-      background: rgba(24, 24, 27, 0.6);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      background: theme('colors.card');
+      border: 1px solid theme('colors.border');
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     .input-field {
-      width: 100%;
-      background: #09090b;
-      border: 1px solid #27272a;
-      border-radius: 0.375rem;
-      padding: 0.75rem 1rem;
-      color: #fafafa;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
+      width: 100%; background: theme('colors.background'); border: 1px solid theme('colors.border'); border-radius: 0.375rem;
+      padding: 0.75rem 1rem; color: theme('colors.foreground'); font-size: 0.875rem; transition: border-color 0.2s;
     }
-    .input-field:focus {
-      outline: none;
-      border-color: #fafafa;
-      box-shadow: 0 0 0 1px #fafafa;
-    }
+    .input-field:focus { outline: none; border-color: theme('colors.primary'); }
     .btn-primary {
-      background-color: #fafafa;
-      color: #18181b;
-      font-weight: 500;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.375rem;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      background: theme('colors.primary'); color: theme('colors.primary-foreground'); font-weight: 500; padding: 0.625rem 1.25rem;
+      border-radius: 0.375rem; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.875rem;
     }
-    .btn-primary:hover {
-      background-color: #e4e4e7;
-      transform: translateY(-1px);
+    .btn-primary:hover:not(:disabled) { background: #e4e4e7; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary {
+      background-color: transparent; color: theme('colors.foreground'); border: 1px solid theme('colors.border');
+      padding: 0.625rem 1.25rem; border-radius: 0.375rem; transition: background 0.2s; font-weight: 500; font-size: 0.875rem;
     }
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
+    .btn-secondary:hover { background-color: theme('colors.muted'); }
+    
     .spinner {
-      border: 2px solid rgba(24,24,27,0.3);
-      border-top-color: #18181b;
-      border-radius: 50%;
-      width: 1.25rem;
-      height: 1.25rem;
-      animation: spin 1s linear infinite;
-      margin-right: 0.5rem;
-      display: none;
+      border: 2px solid theme('colors.border'); border-top-color: theme('colors.primary-foreground'); border-radius: 50%;
+      width: 1rem; height: 1rem; animation: spin 0.8s linear infinite; margin-right: 0.5rem; display: none;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .step-indicator { display: flex; justify-content: space-between; margin-bottom: 32px; position: relative; }
+    .step-indicator::before { content: ""; position: absolute; top: 12px; left: 0; right: 0; height: 1px; background: theme('colors.border'); z-index: 0; }
+    .step-dot { 
+      width: 24px; height: 24px; border-radius: 50%; background: theme('colors.background'); border: 1px solid theme('colors.border'); color: theme('colors.muted-foreground'); 
+      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; z-index: 1; transition: all 0.2s;
+    }
+    .step-dot.active { background: theme('colors.primary'); border-color: theme('colors.primary'); color: theme('colors.primary-foreground'); }
+    .step-dot.completed { background: theme('colors.foreground'); border-color: theme('colors.foreground'); color: theme('colors.primary-foreground'); }
+
+    .timeline { position: relative; padding-left: 24px; margin-top: 24px; }
+    .timeline::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; width: 1px; background: theme('colors.border'); }
+    .timeline-item { position: relative; padding-bottom: 24px; }
+    .timeline-item::before { 
+      content: ""; position: absolute; left: -20px; top: 6px; width: 8px; height: 8px; 
+      border-radius: 50%; background: theme('colors.foreground'); z-index: 1;
+    }
+    .timeline-item.pending::before { background: theme('colors.border'); }
+
+    #chat-widget {
+      position: fixed; bottom: 24px; right: 24px; width: 340px;
+      background: theme('colors.card'); border: 1px solid theme('colors.border'); border-radius: 12px;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); transform: translateY(120%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 50;
+    }
+    #chat-widget.open { transform: translateY(0); }
+    #chat-header { background: theme('colors.background'); border-bottom: 1px solid theme('colors.border'); padding: 12px 16px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
+    #chat-messages { flex: 1; min-height: 250px; max-height: 350px; overflow-y: auto; padding: 16px; font-size: 13px; display: flex; flex-direction: column; gap: 12px;}
+    .msg { padding: 10px 14px; border-radius: 8px; max-width: 85%; line-height: 1.5; }
+    .msg.bot { background: theme('colors.background'); border: 1px solid theme('colors.border'); align-self: flex-start; border-bottom-left-radius: 2px; }
+    .msg.user { background: theme('colors.primary'); color: theme('colors.primary-foreground'); align-self: flex-end; border-bottom-right-radius: 2px; }
+    #chat-input-area { display: flex; border-top: 1px solid theme('colors.border'); background: theme('colors.background'); padding: 8px;}
+    #chat-input { flex: 1; background: transparent; border: none; padding: 8px 12px; font-size: 13px; color: theme('colors.foreground'); outline: none; font-family: 'Inter', sans-serif;}
+    #chat-send { background: transparent; border: none; color: theme('colors.foreground'); padding: 8px 12px; cursor: pointer; font-weight: 500; font-size: 13px; }
+    #chat-send:hover { color: #a1a1aa; }
+
+    #chat-toggle {
+      position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px;
+      background: theme('colors.primary'); color: theme('colors.primary-foreground'); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); z-index: 49; font-size: 20px; transition: transform 0.2s;
+    }
+    #chat-toggle:hover { transform: scale(1.05); }
+    
+    .bg-blobs { display: none; }
   </style>
+
+
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
   
-  <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[120px] pointer-events-none"></div>
-  <div class="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-purple-600/20 blur-[100px] pointer-events-none"></div>
+  
 
   <div class="w-full max-w-2xl relative z-10">
-    
-    <div class="text-center mb-10">
-      <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-white to-gray-400 text-black font-bold text-xl mb-4 shadow-lg shadow-white/10">
-        AI
-      </div>
-      <h1 class="text-3xl font-semibold tracking-tight text-white mb-2">Welcome to the Team</h1>
-      <p class="text-muted-foreground text-sm max-w-md mx-auto">
-        Please complete your onboarding profile below. Our AI system will extract the details and prepare your customized 30-day roadmap.
-      </p>
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white text-black font-semibold text-lg mb-4">AI</div>
+      <h1 class="text-2xl font-medium tracking-tight text-white mb-2">Welcome to the Team</h1>
+      <p class="text-muted-foreground text-sm max-w-md mx-auto">Please complete your onboarding profile below.</p>
     </div>
 
-    <div class="glass-card rounded-xl p-6 sm:p-8">
-      <form id="onboarding-form" class="space-y-6">
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-300">Full Legal Name</label>
-            <input type="text" id="f_name" class="input-field" placeholder="e.g. Jane Doe" required />
+    <div class="glass-card rounded-xl p-6 sm:p-8" id="wizard-container">
+      <div class="step-indicator" id="step-indicator">
+        <div class="step-dot active" id="dot-1">1</div>
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-dot" id="dot-3">3</div>
+      </div>
+
+      <form id="onboarding-form">
+        <!-- STEP 1 -->
+        <div id="step-1" class="space-y-6">
+          <h2 class="text-lg font-medium text-white mb-4">Personal Details</h2>
+          <div class="grid grid-cols-1 gap-6">
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-300">Full Legal Name</label>
+              <input type="text" id="f_name" class="input-field" placeholder="e.g. Jane Doe" required />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-300">Personal Email</label>
+              <input type="email" id="f_email" class="input-field" placeholder="jane.doe@example.com" required />
+            </div>
           </div>
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-300">Personal Email</label>
-            <input type="email" id="f_email" class="input-field" placeholder="jane.doe@example.com" required />
+          <div class="pt-4 flex justify-end">
+            <button type="button" class="btn-primary" onclick="nextStep(2)">Next: Role Details →</button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <!-- STEP 2 -->
+        <div id="step-2" class="space-y-6 hidden">
+          <h2 class="text-lg font-medium text-white mb-4">Role Details</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-300">Role Title</label>
+              <input type="text" id="f_role" class="input-field" placeholder="e.g. Senior Product Designer" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-300">Department</label>
+              <input type="text" id="f_dept" class="input-field" placeholder="e.g. Design" />
+            </div>
+          </div>
+          <div class="pt-4 flex justify-between">
+            <button type="button" class="btn-secondary" onclick="nextStep(1)">← Back</button>
+            <button type="button" class="btn-primary" onclick="nextStep(3)">Next: Context & Upload →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div id="step-3" class="space-y-6 hidden">
+          <h2 class="text-lg font-medium text-white mb-4">Context & Verification</h2>
           <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-300">Role Title</label>
-            <input type="text" id="f_role" class="input-field" placeholder="e.g. Senior Product Designer" />
+            <label class="text-sm font-medium text-gray-300">Upload ID / Resume (PDF/Img)</label>
+            <input type="file" id="f_doc" class="input-field" accept=".pdf,.png,.jpg,.jpeg" />
+            <p class="text-xs text-muted-foreground mt-1">For simulated OCR verification & identity check.</p>
           </div>
           <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-300">Department</label>
-            <input type="text" id="f_dept" class="input-field" placeholder="e.g. Design" />
+            <label class="text-sm font-medium text-gray-300">Additional Context (Magic Parse)</label>
+            <textarea id="f_notes" class="input-field min-h-[80px]" placeholder="Manager name, start date, special requests..."></textarea>
+          </div>
+
+          <div id="error-alert" class="hidden rounded-md border border-red-900/50 bg-red-900/20 p-4 text-sm text-red-400 mt-4"></div>
+
+          <div class="pt-4 flex justify-between">
+            <button type="button" class="btn-secondary" onclick="nextStep(2)">← Back</button>
+            <button type="submit" id="submit-btn" class="btn-primary">
+              <div id="spinner" class="spinner"></div>
+              <span id="btn-text">Submit Profile securely</span>
+            </button>
           </div>
         </div>
+      </form>
 
-        <div class="space-y-2">
-          <label class="text-sm font-medium text-gray-300">Resume / Additional Context (Magic Parse)</label>
-          <p class="text-xs text-muted-foreground mb-2">Paste any other details (manager name, location, start date, notes). Our AI will parse this automatically.</p>
-          <textarea id="f_notes" class="input-field min-h-[120px] resize-y" placeholder="Manager: Sarah Chen. Location: New York (Remote). Starts on 2026-08-01..."></textarea>
-        </div>
-
-        <div id="error-alert" class="hidden rounded-md border border-red-900/50 bg-red-900/20 p-4 text-sm text-red-400">
-        </div>
-
-        <div id="success-alert" class="hidden rounded-md border border-green-900/50 bg-green-900/20 p-6 text-center">
+      <!-- SUCCESS TIMELINE -->
+      <div id="success-view" class="hidden">
+        <div class="text-center mb-6">
           <svg class="w-12 h-12 text-green-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <h3 class="text-lg font-medium text-green-400 mb-1">Onboarding Request Submitted</h3>
-          <p class="text-sm text-green-300/80">Your profile is being reviewed by the HR team. Check your email shortly for your customized welcome roadmap!</p>
+          <h3 class="text-xl font-medium text-white mb-1">Intake Submitted Successfully!</h3>
+          <p class="text-sm text-green-300/80">Your profile is being reviewed by the HR team.</p>
         </div>
 
-        <div class="pt-2 border-t border-white/5 flex justify-end">
-          <button type="submit" id="submit-btn" class="btn-primary w-full sm:w-auto">
-            <div id="spinner" class="spinner"></div>
-            <span id="btn-text">Submit Profile securely</span>
-          </button>
+        <div class="bg-[#09090b] rounded-lg p-6 border border-border">
+          <h4 class="font-medium text-white mb-4 text-sm uppercase tracking-wider">What Happens Next</h4>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="font-medium text-white text-sm">Profile Submitted</div>
+              <div class="text-xs text-muted-foreground">You completed the intake wizard.</div>
+            </div>
+            <div class="timeline-item">
+              <div class="font-medium text-white text-sm">AI Verification & OCR</div>
+              <div class="text-xs text-muted-foreground">Document verification and data extraction.</div>
+            </div>
+            <div class="timeline-item pending">
+              <div class="font-medium text-white text-sm">HR / Manager Approval</div>
+              <div class="text-xs text-muted-foreground">Your manager and HR approve the request.</div>
+            </div>
+            <div class="timeline-item pending">
+              <div class="font-medium text-white text-sm">IT Provisioning</div>
+              <div class="text-xs text-muted-foreground">Accounts and hardware assigned.</div>
+            </div>
+            <div class="timeline-item pending pb-0">
+              <div class="font-medium text-white text-sm">Welcome Day 1!</div>
+              <div class="text-xs text-muted-foreground">You receive your 30-day roadmap.</div>
+            </div>
+          </div>
         </div>
+      </div>
 
-      </form>
     </div>
     
     <div class="mt-8 text-center text-xs text-muted-foreground">
@@ -165,10 +237,37 @@
         HR Admin Login
       </a>
     </div>
+  </div>
 
+  <!-- AI FAQ Chatbot -->
+  <div id="chat-toggle" onclick="toggleChat()">💬</div>
+  <div id="chat-widget">
+    <div id="chat-header" onclick="toggleChat()">
+      <span>AI HR Assistant</span>
+      <span>▼</span>
+    </div>
+    <div id="chat-messages">
+      <div class="msg bot">Hi! I'm your AI HR assistant. Ask me any questions about company policies, benefits, or the onboarding process.</div>
+    </div>
+    <div id="chat-input-area">
+      <input type="text" id="chat-input" placeholder="Ask a question..." onkeypress="handleChatKey(event)" />
+      <button id="chat-send" onclick="sendChatMessage()">Send</button>
+    </div>
   </div>
 
   <script>
+    // Wizard Logic
+    function nextStep(step) {
+      document.getElementById('step-1').style.display = step === 1 ? 'block' : 'none';
+      document.getElementById('step-2').style.display = step === 2 ? 'block' : 'none';
+      document.getElementById('step-3').style.display = step === 3 ? 'block' : 'none';
+      
+      document.getElementById('dot-1').className = 'step-dot ' + (step >= 1 ? 'active' : '') + (step > 1 ? ' completed' : '');
+      document.getElementById('dot-2').className = 'step-dot ' + (step >= 2 ? 'active' : '') + (step > 2 ? ' completed' : '');
+      document.getElementById('dot-3').className = 'step-dot ' + (step >= 3 ? 'active' : '');
+    }
+
+    // Form Submission
     document.getElementById('onboarding-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -176,16 +275,15 @@
       const btnText = document.getElementById('btn-text');
       const spinner = document.getElementById('spinner');
       const errorAlert = document.getElementById('error-alert');
-      const successAlert = document.getElementById('success-alert');
       
       errorAlert.classList.add('hidden');
-      successAlert.classList.add('hidden');
       
       const name = document.getElementById('f_name').value.trim();
       const email = document.getElementById('f_email').value.trim();
       const role = document.getElementById('f_role').value.trim();
       const dept = document.getElementById('f_dept').value.trim();
       const notes = document.getElementById('f_notes').value.trim();
+      const hasFile = document.getElementById('f_doc').files.length > 0;
       
       const raw_text = [
         name ? "Name: " + name : '',
@@ -209,7 +307,7 @@
         const response = await fetch('/intake', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw_text })
+          body: JSON.stringify({ raw_text, document_uploaded: hasFile })
         });
         
         if (!response.ok) {
@@ -217,12 +315,10 @@
           throw new Error(errData.detail || 'Submission failed.');
         }
         
-        document.querySelector('.grid').style.display = 'none';
-        document.querySelectorAll('.grid')[1].style.display = 'none';
-        document.getElementById('f_notes').parentElement.style.display = 'none';
-        btn.parentElement.style.display = 'none';
-        
-        successAlert.classList.remove('hidden');
+        // Show Success Timeline
+        document.getElementById('onboarding-form').style.display = 'none';
+        document.getElementById('step-indicator').style.display = 'none';
+        document.getElementById('success-view').style.display = 'block';
         
       } catch (err) {
         errorAlert.textContent = err.message;
@@ -232,6 +328,54 @@
         spinner.style.display = 'none';
       }
     });
+
+    // Chatbot Logic
+    function toggleChat() {
+      document.getElementById('chat-widget').classList.toggle('open');
+      document.getElementById('chat-toggle').style.display = document.getElementById('chat-widget').classList.contains('open') ? 'none' : 'flex';
+      if(document.getElementById('chat-widget').classList.contains('open')) {
+        document.getElementById('chat-input').focus();
+      }
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      const msgs = document.getElementById('chat-messages');
+      msgs.innerHTML += `<div class="msg user">${escapeHtml(text)}</div>`;
+      input.value = '';
+      msgs.scrollTop = msgs.scrollHeight;
+      
+      // Loading indicator
+      const loadId = 'load-' + Date.now();
+      msgs.innerHTML += `<div class="msg bot text-muted-foreground" id="${loadId}">Thinking...</div>`;
+      msgs.scrollTop = msgs.scrollHeight;
+
+      try {
+        const res = await fetch('/chat/faq', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({question: text})
+        });
+        const data = await res.json();
+        document.getElementById(loadId).remove();
+        msgs.innerHTML += `<div class="msg bot">${escapeHtml(data.answer)}</div>`;
+      } catch(e) {
+        document.getElementById(loadId).remove();
+        msgs.innerHTML += `<div class="msg bot text-red-400">Failed to connect to AI.</div>`;
+      }
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function handleChatKey(e) {
+      if(e.key === 'Enter') sendChatMessage();
+    }
+    
+    function escapeHtml(s) {
+      return String(s||"").replace(/[&<>"'`=\/]/g, function (s) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "/": "&#x2F;", "`": "&#x60;", "=": "&#x3D;" })[s]; });
+    }
   </script>
 </body>
 </html>

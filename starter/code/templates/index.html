@@ -4,210 +4,250 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Onboarding Automation · HR Console</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b1020;
-      --panel: #131a2e;
-      --panel-2: #1a2240;
-      --border: #283355;
-      --text: #e7ecf6;
-      --muted: #93a0bd;
-      --accent: #6ea8ff;
-      --accent-2: #8b7bff;
-      --green: #4ade80;
-      --amber: #fbbf24;
-      --red: #f87171;
-      --radius: 14px;
+      --bg: #09090b;
+      --panel: #18181b;
+      --panel-2: #27272a;
+      --border: #3f3f46;
+      --text: #fafafa;
+      --muted: #a1a1aa;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --radius: 8px;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 80% -10%, #1c2547 0, transparent 60%), var(--bg);
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #52525b; }
     header {
-      padding: 22px 28px;
+      padding: 16px 32px;
       border-bottom: 1px solid var(--border);
-      background: rgba(11,16,32,0.7);
-      backdrop-filter: blur(8px);
+      background: rgba(9, 9, 11, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       position: sticky; top: 0; z-index: 10;
     }
-    header .row { display: flex; align-items: center; gap: 14px; }
+    header .row { display: flex; align-items: center; gap: 16px; }
     .logo {
-      width: 38px; height: 38px; border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      display: grid; place-items: center; font-weight: 800; color: #0b1020;
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--text);
+      display: grid; place-items: center; font-weight: 800; color: var(--bg);
+      font-size: 16px;
     }
-    h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
-    .sub { color: var(--muted); font-size: 13px; }
+    h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); font-size: 13px; font-weight: 400; }
     main {
-      max-width: 1000px; margin: 0 auto; padding: 26px 20px 80px;
-      display: flex; flex-direction: column; gap: 22px;
+      max-width: 1000px; margin: 0 auto; padding: 32px 20px 80px;
+      display: flex; flex-direction: column; gap: 24px;
     }
     .card {
-      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      background: var(--panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     .card h2 {
-      font-size: 15px; margin: 0 0 14px;
-      text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+      font-size: 15px; margin: 0 0 16px; font-weight: 600;
+      letter-spacing: -0.01em; color: var(--text);
       display: flex; align-items: center; gap: 8px;
     }
-    .col { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
-    label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
-    textarea {
-      width: 100%; min-height: 150px; resize: vertical;
-      background: #0d1428; color: var(--text);
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 12px 14px; font-size: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      outline: none;
+    .col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+    label { font-size: 13px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 8px; }
+    input, select, textarea {
+      width: 100%;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 14px; font-size: 14px; font-family: 'Inter', sans-serif;
+      outline: none; transition: border-color 0.2s;
     }
-    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(110,168,255,.15); }
-    .examples { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
-    .chip {
-      font-size: 12px; padding: 6px 11px; border-radius: 999px;
-      background: #0d1428; border: 1px solid var(--border); color: var(--muted);
-      cursor: pointer; transition: .15s;
-    }
-    .chip:hover { border-color: var(--accent); color: var(--text); }
+    textarea { min-height: 150px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     button {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #0b1020; border: 0; border-radius: 10px;
-      padding: 11px 18px; font-weight: 700; font-size: 14px; cursor: pointer;
-      transition: transform .08s ease, filter .15s;
+      background: var(--text);
+      color: var(--bg); border: 1px solid transparent; border-radius: 6px;
+      padding: 10px 16px; font-weight: 500; font-size: 14px; cursor: pointer;
+      transition: background 0.2s;
+      font-family: 'Inter', sans-serif;
     }
-    button:hover { filter: brightness(1.07); }
-    button:active { transform: translateY(1px); }
+    button:hover:not(:disabled) { background: #e4e4e7; }
+    button:active:not(:disabled) { transform: translateY(1px); }
     button.ghost {
       background: transparent; color: var(--text); border: 1px solid var(--border);
     }
-    button.ghost:hover { border-color: var(--accent); }
-    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.ghost:hover:not(:disabled) { background: var(--panel-2); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
     .row-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .badge {
-      font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
-      text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
+      font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 4px;
+      border: 1px solid var(--border);
     }
-    .b-green { background: rgba(74,222,128,.14); color: var(--green); border:1px solid rgba(74,222,128,.3);}
-    .b-amber { background: rgba(251,191,36,.14); color: var(--amber); border:1px solid rgba(251,191,36,.3);}
-    .b-red   { background: rgba(248,113,113,.14); color: var(--red);   border:1px solid rgba(248,113,113,.3);}
-    .b-blue  { background: rgba(110,168,255,.14); color: var(--accent);border:1px solid rgba(110,168,255,.3);}
-    .result {
-      margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 14px;
-    }
-    .kv { display: grid; grid-template-columns: 130px 1fr; gap: 6px 12px; font-size: 13px; }
-    .kv .k { color: var(--muted); }
-    .kv .v { word-break: break-word; }
-    .meter { height: 8px; border-radius: 999px; background: #0d1428; overflow: hidden; margin-top: 4px; }
-    .meter > span { display: block; height: 100%; background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); }
-    .roadmap {
-      background: #0d1428; border: 1px solid var(--border); border-radius: 10px;
-      padding: 14px 16px; margin-top: 12px; max-height: 320px; overflow: auto;
-      font-size: 13px; line-height: 1.55;
-    }
-    .roadmap h1, .roadmap h2, .roadmap h3 { color: var(--accent); }
-    .roadmap h1 { font-size: 16px; } .roadmap h2 { font-size: 14px; margin-top: 12px;}
-    .roadmap table { border-collapse: collapse; width: 100%; margin: 6px 0; }
-    .roadmap th, .roadmap td { border: 1px solid var(--border); padding: 5px 8px; text-align: left; font-size: 12px; }
-    .roadmap th { background: #131a2e; }
-    .notif { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-    .notif div { font-size: 12px; color: var(--muted); background:#0d1428; border:1px solid var(--border);
-      padding: 7px 10px; border-radius: 8px; font-family: ui-monospace, monospace; }
-    .list { display: flex; flex-direction: column; gap: 10px; }
+    .b-green { background: rgba(16,185,129,0.1); color: var(--green); border-color: rgba(16,185,129,0.2); }
+    .b-amber { background: rgba(245,158,11,0.1); color: var(--amber); border-color: rgba(245,158,11,0.2); }
+    .b-red   { background: rgba(239,68,68,0.1); color: var(--red);   border-color: rgba(239,68,68,0.2); }
+    .b-blue  { background: rgba(37,99,235,0.1); color: var(--accent);border-color: rgba(37,99,235,0.2); }
+    
+    .list { display: flex; flex-direction: column; gap: 12px; }
     .item {
-      background: #0d1428; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px;
+      transition: border-color 0.2s;
     }
-    .item .top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-    .item .name { font-weight: 700; font-size: 14px; }
-    .item .meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
-    .item .actions { display: flex; gap: 8px; margin-top: 10px; }
-    .btn-approve { background: linear-gradient(135deg,#34d399,#10b981); color:#04130c; }
-    .btn-reject  { background: linear-gradient(135deg,#fb7185,#ef4444); color:#1a0606; }
-    .audit-entry { font-size: 12px; border-left: 3px solid var(--border); padding: 8px 12px; margin-bottom: 8px; background:#0d1428; border-radius: 0 8px 8px 0; }
+    .item:hover { border-color: #52525b; }
+    .item .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .item .name { font-weight: 500; font-size: 15px; color: var(--text); }
+    .item .meta { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .item .actions { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-approve { background: var(--text); color: var(--bg); }
+    .btn-reject  { background: transparent; color: var(--red); border: 1px solid var(--border); }
+    .btn-reject:hover:not(:disabled) { background: rgba(239,68,68,0.1); border-color: var(--red); }
+    
+    .audit-entry { font-size: 13px; border-left: 2px solid var(--border); padding: 10px 14px; margin-bottom: 8px; background: var(--bg); transition: background 0.2s; }
+    .audit-entry:hover { background: var(--panel); }
     .audit-entry.auto { border-left-color: var(--accent); }
     .audit-entry.human { border-left-color: var(--amber); }
-    .audit-entry .a { font-weight: 700; }
-    .empty { color: var(--muted); font-size: 13px; text-align: center; padding: 18px; }
+    .audit-entry .a { font-weight: 500; color: var(--text); }
+    
+    .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 32px; }
     .spinner {
-      width: 16px; height: 16px; border: 2px solid rgba(11,16,32,.4);
-      border-top-color: #0b1020; border-radius: 50%; animation: spin .7s linear infinite;
+      width: 16px; height: 16px; border: 2px solid var(--border);
+      border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite;
       display: inline-block; vertical-align: middle;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .id { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); }
-    .tabs { display: flex; gap: 4px; background:#0d1428; padding: 4px; border-radius: 10px; border:1px solid var(--border); }
+    
+    .tabs { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 8px; border: 1px solid var(--border); }
     .tabs button {
       flex: 1; background: transparent; color: var(--muted); border: 0; padding: 8px;
-      font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 500; border-radius: 4px; cursor: pointer;
     }
+    .tabs button:hover:not(.active) { color: var(--text); background: var(--panel); }
     .tabs button.active { background: var(--panel-2); color: var(--text); }
+    
     .hidden { display: none; }
-    .pill-ok { color: var(--green); }
-    details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+    .pill-ok { color: var(--green); font-weight: 500; }
+    details summary { cursor: pointer; color: var(--text); font-size: 13px; font-weight: 500; margin-top: 10px; outline: none; }
+    
     .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: #1a2240; border:1px solid var(--border); color: var(--text);
-      padding: 12px 18px; border-radius: 10px; font-size: 14px; opacity: 0;
-      transition: opacity .25s, transform .25s; z-index: 50; pointer-events: none;
+      position: fixed; bottom: 32px; right: 32px;
+      background: var(--text); color: var(--bg);
+      padding: 12px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; opacity: 0;
+      transition: opacity 0.3s, transform 0.3s; z-index: 50; pointer-events: none;
+      transform: translateY(10px);
     }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
-    code { font-family: ui-monospace, monospace; background:#0d1428; padding:1px 5px; border-radius:5px; font-size:12px; }
-    .error-msg { color: var(--red); font-size: 12px; margin-top: 6px; display: none; }
-    footer { padding: 20px; text-align: center; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 40px; }
-    footer a { color: var(--accent); text-decoration: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    
+    code { font-family: ui-monospace, monospace; background: var(--panel-2); padding: 2px 4px; border-radius: 4px; font-size: 12px; }
+    .error-msg { color: var(--red); font-size: 13px; font-weight: 500; margin-top: 8px; display: none; }
+    
+    footer { padding: 32px 20px; text-align: center; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); margin-top: 40px; }
+    footer a { color: var(--text); text-decoration: none; font-weight: 500; }
     footer a:hover { text-decoration: underline; }
-    .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
-    .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-    .modal-close { float: right; background: transparent; border: 0; color: var(--muted); font-size: 20px; cursor: pointer; padding: 0; line-height: 1; }
+    
+    .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; }
+    .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); position: relative; }
+    .modal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: 0; color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; }
     .modal-close:hover { color: var(--text); }
-    .modal-content { margin-top: 16px; }
-    .tabs { display: flex; gap: 4px; background:#0d1428; padding: 4px; border-radius: 10px; border:1px solid var(--border); }
-    .tabs button {
-      flex: 1; background: transparent; color: var(--muted); border: 0; padding: 8px;
-      font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer;
-    }
-    .tabs button.active { background: var(--panel-2); color: var(--text); }
-    .hidden { display: none; }
-    .pill-ok { color: var(--green); }
-    details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
-    .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: #1a2240; border:1px solid var(--border); color: var(--text);
-      padding: 12px 18px; border-radius: 10px; font-size: 14px; opacity: 0;
-      transition: opacity .25s, transform .25s; z-index: 50; pointer-events: none;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
-    code { font-family: ui-monospace, monospace; background:#0d1428; padding:1px 5px; border-radius:5px; font-size:12px; }
+    .modal h2 { margin: 0 0 20px; font-size: 18px; font-weight: 600; }
+    .modal-field { margin-bottom: 16px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+    
+    .stats-bar { display: flex; gap: 16px; margin: 32px auto 0; max-width: 1000px; padding: 0 20px; flex-wrap: wrap; }
+    .stat-card { flex: 1; min-width: 150px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+    .stat-label { font-size: 12px; font-weight: 500; color: var(--muted); }
+    .stat-value { font-size: 28px; font-weight: 600; color: var(--text); font-family: 'Inter', sans-serif; }
+    
+    #login-screen { position: fixed; inset: 0; background-color: var(--bg); z-index: 200; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    .login-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 32px; width: 340px; text-align: center; }
+    .login-box input { width: 100%; padding: 12px; margin: 20px 0; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: 18px; font-weight: 500; text-align: center; letter-spacing: 4px; outline: none; }
+    .login-box input:focus { border-color: var(--accent); }
+    .login-box button { width: 100%; padding: 12px; font-size: 14px; border-radius: 6px; }
+    
+    .roadmap { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-top: 12px; max-height: 400px; overflow: auto; font-size: 13px; line-height: 1.6; }
+    .roadmap h1, .roadmap h2, .roadmap h3 { color: var(--text); font-weight: 600; margin-top: 16px; margin-bottom: 8px; }
+    .roadmap h1 { font-size: 16px; margin-top: 0; }
+    .roadmap ul { padding-left: 20px; color: var(--muted); }
+    .roadmap li { margin-bottom: 4px; }
   </style>
+
+
 </head>
 <body>
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <div class="logo" style="width:56px;height:56px;font-size:24px;margin-bottom:24px">AI</div>
+    <div class="login-box">
+      <h2 style="margin:0;font-size:18px">HR Console Login</h2>
+      <p style="color:var(--muted);font-size:13px;margin:8px 0 0">Enter your Admin PIN to continue</p>
+      <input type="password" id="admin-pin" placeholder="••••" maxlength="8" onkeydown="if(event.key==='Enter') doLogin()">
+      <button onclick="doLogin()">Authenticate</button>
+      <div id="login-error" class="error-msg">Invalid PIN</div>
+    </div>
+  </div>
+
   <header>
     <div class="row">
       <div class="logo">AI</div>
       <div>
-        <h1>HR Admin Dashboard <a href="/onboarding" style="font-size:12px; margin-left: 10px; color: var(--accent); text-decoration: none;">View Employee Portal ↗</a></h1>
+        <h1>HR Admin Dashboard <a href="/onboarding" style="font-size:12px; margin-left: 10px; color: var(--accent); text-decoration: none;">View Employee Portal ↗</a> <button class="ghost" style="padding: 4px 8px; font-size: 11px; margin-left: 10px;" onclick="logout()">Logout</button></h1>
         <div class="sub" id="health">HR Console · connecting…</div>
       </div>
     </div>
   </header>
+  
+  <div class="stats-bar" id="stats-bar" style="display:none;">
+    <div class="stat-card"><div class="stat-label">Total Intake</div><div class="stat-value" id="stat-total">0</div></div>
+    <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="stat-pending" style="color:var(--amber)">0</div></div>
+    <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" id="stat-approved" style="color:var(--green)">0</div></div>
+    <div class="stat-card"><div class="stat-label">Auto-Approved</div><div class="stat-value" id="stat-auto" style="color:var(--accent)">0</div></div>
+    <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value" id="stat-rejected" style="color:var(--red)">0</div></div>
+  </div>
 
   <main>
-    <!-- Admin Dashboard Tabs -->
     <div class="col">
       <section class="card">
         <div class="tabs">
           <button data-tab="pending" class="active">Review Queue</button>
           <button data-tab="records">All Records</button>
           <button data-tab="audit">Audit Trail</button>
+          <button class="ghost" id="export-btn" style="display:none; font-size:12px; padding:4px 8px; margin-left:8px;" onclick="exportCSV()">📥 Export CSV</button>
         </div>
         <div style="margin-top:14px">
           <div id="tab-pending"><div class="empty">Loading…</div></div>
-          <div id="tab-records" class="hidden"><div class="empty">Loading…</div></div>
-          <div id="tab-audit" class="hidden"><div class="empty">Loading…</div></div>
+          <div id="tab-records" style="display:none;">
+            <div style="display:flex; gap:12px; margin-bottom:16px;">
+              <input type="text" id="search-input" placeholder="Search name/email..." onkeyup="renderRecords()" style="flex:1;" />
+              <select id="filter-status" onchange="renderRecords()">
+                <option value="">All Statuses</option>
+                <option value="pending_review">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="auto_approved">Auto Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <select id="filter-dept" onchange="renderRecords()">
+                <option value="">All Departments</option>
+              </select>
+            </div>
+            <div id="records-list"></div>
+          </div>
+          <div id="tab-audit" style="display:none;"><div class="empty">Loading…</div></div>
         </div>
         <div class="row-between" style="margin-top:14px">
           <span class="sub" style="font-size:12px">Auto-refreshes after each action</span>
@@ -229,19 +269,105 @@
   <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
     <div class="modal">
       <button class="modal-close" onclick="closeModal()">×</button>
-      <h2 style="margin:0 0 16px;font-size:16px;">Record Details</h2>
+      <h2 id="modal-title">Record Details</h2>
       <div id="modal-content" class="modal-content"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="decision-modal" onclick="if(event.target===this)closeDecisionModal()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeDecisionModal()">×</button>
+      <h2 id="decision-title">Approve Record</h2>
+      <div id="decision-meta" style="margin-bottom: 16px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px;"></div>
+      
+      <div class="modal-field" id="reject-reason-group" style="display:none">
+        <label>Reason for rejection *</label>
+        <select id="decision-reason">
+          <option value="">-- Select a reason --</option>
+          <option value="Incomplete / missing documentation">Incomplete / missing documentation</option>
+          <option value="Failed background or reference check">Failed background or reference check</option>
+          <option value="Duplicate submission">Duplicate submission</option>
+          <option value="Position cancelled or already filled">Position cancelled or already filled</option>
+          <option value="Candidate withdrew">Candidate withdrew</option>
+          <option value="Other">Other (specify in notes)</option>
+        </select>
+      </div>
+
+      <div class="modal-field">
+        <label>Reviewer Name *</label>
+        <input type="text" id="decision-reviewer" placeholder="e.g. Sarah Chen" />
+      </div>
+      
+      <div class="modal-field">
+        <label>Notes (optional)</label>
+        <textarea id="decision-notes" rows="2" placeholder="Any internal notes..."></textarea>
+      </div>
+
+      <div id="decision-warning" style="font-size: 12px; color: var(--amber); margin-bottom: 16px;"></div>
+
+      <div class="modal-actions">
+        <button class="ghost" onclick="closeDecisionModal()">Cancel</button>
+        <button id="decision-confirm-btn" onclick="confirmDecision()">Confirm</button>
+      </div>
     </div>
   </div>
 
 <script>
 "use strict";
 // All API calls are same-origin (served by FastAPI).
-var samples = {
-  high: "Ayesha Raza, ayesha.raza@gmail.com, Backend Engineer, Engineering, Islamabad, manager Sarah Chen, full-time, starts 2026-07-15",
-  low: "new hire maybe? name unclear, dept unknown, no email given, starts whenever",
-  empty: ""
-};
+var currentToken = localStorage.getItem("hr_admin_token");
+if (currentToken) {
+  $("login-screen").style.display = "none";
+}
+
+function authFetch(url, options) {
+  options = options || {};
+  options.headers = options.headers || {};
+  if (currentToken) {
+    options.headers["Authorization"] = "Bearer " + currentToken;
+  }
+  return fetch(url, options).then(function(r) {
+    if (r.status === 401) {
+      logout();
+      throw new Error("Unauthorized");
+    }
+    return r;
+  });
+}
+
+function doLogin() {
+  var pin = $("admin-pin").value;
+  if(!pin) return;
+  fetch("/auth/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({pin: pin})
+  }).then(function(r){
+    if(!r.ok) throw new Error("Invalid PIN");
+    return r.json();
+  }).then(function(data){
+    currentToken = data.access_token;
+    localStorage.setItem("hr_admin_token", currentToken);
+    $("login-screen").style.display = "none";
+    $("login-error").style.display = "none";
+    $("stats-bar").style.display = "flex";
+    loadTab(activeTab());
+    loadHealth();
+    loadStats();
+    setInterval(loadStats, 60000);
+  }).catch(function(e){
+    $("login-error").style.display = "block";
+    $("login-error").textContent = e.message;
+  });
+}
+
+function logout() {
+  currentToken = null;
+  localStorage.removeItem("hr_admin_token");
+  $("login-screen").style.display = "flex";
+  $("stats-bar").style.display = "none";
+  $("admin-pin").value = "";
+}
 
 function $(id) { return document.getElementById(id); }
 function elTab(t) { return $("tab-" + t); }
@@ -250,8 +376,9 @@ function activeTab() {
   return btn ? btn.dataset.tab : "pending";
 }
 
-// ── Health ──────────────────────────────────────────────────────
+// ── Health & Stats ──────────────────────────────────────────────────────
 function loadHealth() {
+  if (!currentToken) return;
   fetch("/health").then(function (r) { return r.json(); }).then(function (d) {
     $("health").innerHTML =
       "HR Console · <span class=\"pill-ok\">● online</span> · model <code>" +
@@ -259,6 +386,29 @@ function loadHealth() {
   }).catch(function () {
     $("health").textContent = "HR Console · ⚠ cannot reach server";
   });
+}
+
+function loadStats() {
+  if (!currentToken) return;
+  authFetch("/stats").then(r => r.json()).then(d => {
+    $("stat-total").textContent = d.total || 0;
+    $("stat-pending").textContent = d.pending_review || 0;
+    $("stat-approved").textContent = d.approved || 0;
+    $("stat-auto").textContent = d.auto_approved || 0;
+    $("stat-rejected").textContent = d.rejected || 0;
+    
+    // Update department filter options
+    var depts = Object.keys(d.by_department || {}).sort();
+    var select = $("filter-dept");
+    var currentVal = select.value;
+    select.innerHTML = '<option value="">All Departments</option>';
+    depts.forEach(function(dept) {
+      if(dept && dept !== "Unknown") {
+        select.innerHTML += '<option value="' + escapeHtml(dept) + '">' + escapeHtml(dept) + '</option>';
+      }
+    });
+    select.value = currentVal;
+  }).catch(console.error);
 }
 
 // ── Render helpers ──────────────────────────────────────────────
@@ -305,46 +455,6 @@ function mdToHtml(md) {
   return "<p>" + h + "</p>";
 }
 
-function renderResult(d) {
-  var ex = d.extracted_data || {};
-  var conf = ex.confidence_score;
-  var confPct = conf == null ? 0 : Math.round(conf * 100);
-  var notif = d.notifications_sent || {};
-  var notifHtml = Object.keys(notif).length
-    ? '<div class="notif">' + Object.keys(notif).map(function (k) { return "<div>✓ " + k + ": " + escapeHtml(notif[k]) + "</div>"; }).join("") + "</div>"
-    : '<div class="empty">No notifications fired (record held for review).</div>';
-  var roadmapHtml = d.roadmap
-    ? '<details open><summary style="margin-top:12px;display:block">📄 Personalized roadmap (AI-generated)</summary><div class="roadmap">' + mdToHtml(d.roadmap) + "</div></details>"
-    : "";
-
-  $("result").innerHTML =
-    '<div class="row-between">' +
-      '<div class="kv" style="grid-template-columns: auto 1fr; gap:4px 14px; align-items:center;">' +
-        '<span class="k">Routed status</span><span>' + statusBadge(d.status) + "</span>" +
-      "</div>" +
-      '<span class="id">' + d.record_id + "</span>" +
-    "</div>" +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px">' +
-      "<div><div class=\"kv\">" +
-        "<span class=\"k\">Name</span><span class=\"v\">" + escapeHtml(ex.name) + "</span>" +
-        "<span class=\"k\">Email</span><span class=\"v\">" + escapeHtml(ex.email) + "</span>" +
-        "<span class=\"k\">Role</span><span class=\"v\">" + escapeHtml(ex.role) + "</span>" +
-        "<span class=\"k\">Department</span><span class=\"v\">" + escapeHtml(ex.department) + "</span>" +
-        "<span class=\"k\">Manager</span><span class=\"v\">" + escapeHtml(ex.manager) + "</span>" +
-        "<span class=\"k\">Start date</span><span class=\"v\">" + escapeHtml(ex.start_date) + "</span>" +
-      "</div></div>" +
-      "<div>" +
-        '<span class="k" style="font-size:13px;color:var(--muted)">AI confidence</span>' +
-        '<div style="font-size:22px;font-weight:800">' + (conf == null ? "—" : conf.toFixed(2)) + "</div>" +
-        '<div class="meter"><span style="width:' + confPct + '%"></span></div>' +
-        '<div style="font-size:12px;color:var(--muted);margin-top:6px">threshold 0.80 → ' + (conf >= 0.8 ? "auto-approved" : "sent to human review") + "</div>" +
-      "</div>" +
-    "</div>" +
-    '<div style="margin-top:14px"><div class="k" style="font-size:13px;color:var(--muted);margin-bottom:2px">Notifications</div>' + notifHtml + "</div>" +
-    roadmapHtml;
-  $("result").classList.remove("hidden");
-}
-
 // ── Tabs ────────────────────────────────────────────────────────
 var tabButtons = document.querySelectorAll(".tabs button");
 for (var i = 0; i < tabButtons.length; i++) {
@@ -352,7 +462,7 @@ for (var i = 0; i < tabButtons.length; i++) {
     for (var j = 0; j < tabButtons.length; j++) tabButtons[j].classList.remove("active");
     this.classList.add("active");
     ["pending", "records", "audit"].forEach(function (t) {
-      elTab(t).classList.toggle("hidden", t !== this.dataset.tab);
+      elTab(t).style.display = (t === this.dataset.tab) ? "block" : "none";
     }, this);
     var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?tab=" + this.dataset.tab;
     window.history.pushState({path:newUrl},'',newUrl);
@@ -361,28 +471,56 @@ for (var i = 0; i < tabButtons.length; i++) {
 }
 
 function loadTab(t) {
-  var container = elTab(t);
-  container.innerHTML = '<div class="empty">Loading…</div>';
+  if (!currentToken) return;
+  
   if (t === "pending") {
-    fetch("/records").then(function (r) { return r.json(); }).then(function (recs) {
+    var container = $("tab-pending");
+    container.innerHTML = '<div class="empty">Loading…</div>';
+    authFetch("/records").then(function (r) { return r.json(); }).then(function (recs) {
       var pending = recs.filter(function (r) { return r.status === "pending_review"; });
       container.innerHTML = pending.length
         ? '<div class="list">' + pending.map(itemHtml).join("") + "</div>"
         : emptyHtml("No records awaiting review. 🎉");
     }).catch(function (e) { container.innerHTML = failHtml(e); });
   } else if (t === "records") {
-    fetch("/records").then(function (r) { return r.json(); }).then(function (recs) {
-      container.innerHTML = recs.length
-        ? '<div class="list">' + recs.map(itemHtml).join("") + "</div>"
-        : emptyHtml("No records yet. Submit an intake to begin.");
-    }).catch(function (e) { container.innerHTML = failHtml(e); });
+    $("records-list").innerHTML = '<div class="empty">Loading…</div>';
+    authFetch("/records").then(function (r) { return r.json(); }).then(function (recs) {
+      window.allRecordsData = recs;
+      renderRecords();
+    }).catch(function (e) { $("records-list").innerHTML = failHtml(e); });
   } else {
-    fetch("/audit").then(function (r) { return r.json(); }).then(function (entries) {
+    var container = $("tab-audit");
+    container.innerHTML = '<div class="empty">Loading…</div>';
+    authFetch("/audit").then(function (r) { return r.json(); }).then(function (entries) {
       container.innerHTML = entries.length
         ? entries.slice().reverse().map(auditHtml).join("")
         : emptyHtml("No audit entries yet.");
     }).catch(function (e) { container.innerHTML = failHtml(e); });
   }
+}
+
+function renderRecords() {
+  if (!window.allRecordsData) return;
+  
+  var search = $("search-input").value.toLowerCase();
+  var status = $("filter-status").value;
+  var dept = $("filter-dept").value;
+  
+  var filtered = window.allRecordsData.filter(function(r) {
+    var ex = r.extracted_data || {};
+    var name = (ex.name || "").toLowerCase();
+    var email = (ex.email || "").toLowerCase();
+    
+    if (search && !name.includes(search) && !email.includes(search)) return false;
+    if (status && r.status !== status) return false;
+    if (dept && ex.department !== dept) return false;
+    return true;
+  });
+  
+  var container = $("records-list");
+  container.innerHTML = filtered.length
+    ? '<div class="list">' + filtered.map(itemHtml).join("") + "</div>"
+    : emptyHtml("No records found matching filters.");
 }
 
 function emptyHtml(msg) { return '<div class="empty">' + msg + "</div>"; }
@@ -394,8 +532,8 @@ function itemHtml(r) {
   var id = r.record_id;
   var actions = r.status === "pending_review"
     ? '<div class="actions">' +
-        '<button class="btn-approve" onclick="decide(\'' + id + "', 'approve')\">Approve</button>" +
-        '<button class="btn-reject" onclick="decide(\'' + id + "', 'reject')\">Reject</button>" +
+        '<button class="btn-approve" onclick="openDecisionModal(\'' + id + '\', \'approve\', \'' + escapeHtml(ex.name || "") + '\', \'' + escapeHtml(ex.role || "") + '\', ' + conf + ')">Approve</button>' +
+        '<button class="btn-reject" onclick="openDecisionModal(\'' + id + '\', \'reject\', \'' + escapeHtml(ex.name || "") + '\', \'' + escapeHtml(ex.role || "") + '\', ' + conf + ')">Reject</button>' +
       "</div>"
     : "";
   var roadmap = r.roadmap
@@ -425,27 +563,92 @@ function auditHtml(a) {
   "</div>";
 }
 
-window.decide = function (id, decision) {
+var currentDecisionId = null;
+var currentDecisionType = null;
+
+window.openDecisionModal = function(id, decision, name, role, conf) {
   event.stopPropagation();
-  var reviewer = window.prompt("You are " + (decision === "approve" ? "approving" : "rejecting") + " record " + id.slice(0, 8) + "…\nEnter reviewer name:", "HR Reviewer");
-  if (reviewer === null) return;
-  toast(decision === "approving" ? "Approving…" : "Rejecting…");
-  fetch("/approve/" + id, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ decision: decision, approved_by: reviewer, notes: "Reviewed via HR Console" })
-  }).then(function (r) { return r.json(); }).then(function () {
-    toast(decision === "approve" ? "✓ Approved — roadmap generated & notifications sent" : "✓ Rejected");
-    loadTab(activeTab());
-  }).catch(function (e) { toast("✗ Failed: " + e); });
+  currentDecisionId = id;
+  currentDecisionType = decision;
+  
+  $("decision-title").innerHTML = decision === "approve" ? "✅ Approve Onboarding Record" : "❌ Reject Onboarding Record";
+  
+  var confHtml = conf == null ? "—" : conf.toFixed(2);
+  $("decision-meta").innerHTML = "Candidate: <strong>" + name + "</strong><br>Role: " + role + "<br>AI Confidence: " + confHtml;
+  
+  if (decision === "approve") {
+    $("reject-reason-group").style.display = "none";
+    $("decision-warning").innerHTML = "⚠️ This will trigger Slack + Email to hire, manager, and IT.";
+    $("decision-confirm-btn").className = "btn-approve";
+    $("decision-confirm-btn").textContent = "✅ Confirm Approval";
+  } else {
+    $("reject-reason-group").style.display = "block";
+    $("decision-warning").innerHTML = "";
+    $("decision-confirm-btn").className = "btn-reject";
+    $("decision-confirm-btn").textContent = "❌ Confirm Rejection";
+  }
+  
+  $("decision-reviewer").value = "";
+  $("decision-notes").value = "";
+  $("decision-reason").value = "";
+  $("decision-modal").style.display = "flex";
 };
 
-// Intake submission code removed for HR Dashboard
-// All forms are submitted via the /onboarding portal
+window.closeDecisionModal = function() {
+  $("decision-modal").style.display = "none";
+};
 
-$("refresh").onclick = function () { loadTab(activeTab()); };
+window.confirmDecision = function() {
+  var reviewer = $("decision-reviewer").value.trim();
+  if (!reviewer) return alert("Reviewer Name is required.");
+  
+  var notes = $("decision-notes").value.trim();
+  
+  if (currentDecisionType === "reject") {
+    var reason = $("decision-reason").value;
+    if (!reason) return alert("Reason for rejection is required.");
+    notes = "[" + reason + "] " + notes;
+  }
+  
+  $("decision-confirm-btn").disabled = true;
+  toast(currentDecisionType === "approve" ? "Approving…" : "Rejecting…");
+  
+  authFetch("/approve/" + currentDecisionId, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ decision: currentDecisionType, approved_by: reviewer, notes: notes })
+  }).then(function (r) { return r.json(); }).then(function () {
+    toast(currentDecisionType === "approve" ? "✓ Approved — roadmap generated & notifications sent" : "✓ Rejected");
+    closeDecisionModal();
+    $("decision-confirm-btn").disabled = false;
+    loadTab(activeTab());
+  }).catch(function (e) { 
+    toast("✗ Failed: " + e); 
+    $("decision-confirm-btn").disabled = false;
+  });
+};
 
-// Samples code removed
+window.exportCSV = function() {
+  toast("Preparing export...");
+  authFetch("/export/audit")
+    .then(r => r.blob())
+    .then(blob => {
+      var url = window.URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "audit_trail.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast("✓ Export downloaded");
+    })
+    .catch(e => toast("✗ Export failed: " + e));
+};
+
+$("refresh").onclick = function () { 
+  loadTab(activeTab()); 
+  loadStats();
+};
 
 function toast(msg) {
   var t = $("toast");
@@ -456,9 +659,10 @@ function toast(msg) {
 }
 
 function openDetailModal(id) {
+  $("modal-title").innerHTML = "Record Details";
   $("modal-content").innerHTML = '<div class="empty"><span class="spinner"></span> Loading details...</div>';
   $("modal-overlay").style.display = "flex";
-  fetch("/records/" + id).then(r => r.json()).then(d => {
+  authFetch("/records/" + id).then(r => r.json()).then(d => {
     var ex = d.extracted_data || {};
     $("modal-content").innerHTML = `
       <div class="row-between" style="margin-bottom:16px;">
@@ -467,7 +671,7 @@ function openDetailModal(id) {
       </div>
       <div style="margin-bottom: 16px;">
         <h3>Extracted Fields</h3>
-        <pre style="background:#0d1428;padding:12px;border-radius:8px;border:1px solid var(--border);font-size:12px;overflow:auto;">${escapeHtml(JSON.stringify(ex, null, 2))}</pre>
+        <pre style="background: var(--bg); padding: 12px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 12px; overflow: auto;">${escapeHtml(JSON.stringify(ex, null, 2))}</pre>
       </div>
       ${d.roadmap ? `<div><h3>Roadmap</h3><div class="roadmap">${mdToHtml(d.roadmap)}</div></div>` : ""}
     `;
