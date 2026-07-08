@@ -148,14 +148,23 @@ def test_health_check(client):
 
 
 def test_home_serves_ui(client):
-    """The root route serves the HR Console single-page web UI."""
+    """The root route serves the HR Admin Dashboard (no intake form — employees use /onboarding)."""
     response = client.get("/")
     assert response.status_code == 200
     body = response.text
-    # The UI shell must be present
-    assert "AI Onboarding Automation" in body
-    assert "<textarea" in body  # the intake form
-    assert "/intake" in body and "/audit" in body  # wired to the API
+    # HR dashboard shell must be present
+    assert "HR Admin Dashboard" in body
+    assert "/onboarding" in body  # link to employee portal
+    assert "/audit" in body  # wired to the API
+
+def test_onboarding_portal_serves_employee_form(client):
+    """The /onboarding route serves the employee-facing intake form with individual fields."""
+    response = client.get("/onboarding")
+    assert response.status_code == 200
+    body = response.text
+    assert "Welcome to the Team" in body
+    assert "<input" in body    # structured form fields
+    assert "/intake" in body   # wired to the intake API
 
 
 def test_intake_high_confidence(client):

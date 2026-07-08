@@ -6,6 +6,7 @@ approvals, query historical records, and inspect system audit logs.
 """
 
 import uuid
+from datetime import datetime
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import HTMLResponse
@@ -22,15 +23,19 @@ import validator
 import roadmap
 from database import init_db
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 app = FastAPI(
     title="AI Onboarding Automation API",
     description="Backend API for automated document extraction, validation routing, and personalized onboarding roadmap synthesis.",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
-
-@app.on_event("startup")
-def startup_event():
-    init_db()
 
 
 # ── Schemas ─────────────────────────────────────────────────────────────────
@@ -55,6 +60,12 @@ def get_llm_client_dependency() -> OpenAI:
 def home():
     """Serve the HR Console web UI (single-page app in templates/index.html)."""
     ui_path = Path(__file__).parent / "templates" / "index.html"
+    return HTMLResponse(ui_path.read_text(encoding="utf-8"))
+
+@app.get("/onboarding", response_class=HTMLResponse)
+def onboarding_portal():
+    """Serve the Employee-facing onboarding portal."""
+    ui_path = Path(__file__).parent / "templates" / "intake.html"
     return HTMLResponse(ui_path.read_text(encoding="utf-8"))
 
 
@@ -111,7 +122,9 @@ def process_intake(
             "roadmap": plan,
             "notifications_sent": notify.send_all_notifications(extracted),
             "reviewer_notes": "Automatically approved by system.",
-            "reviewer_name": "system"
+            "reviewer_name": "system",
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
         }
         
         review_store.save_record(record_id, record)
@@ -136,7 +149,9 @@ def process_intake(
             "roadmap": "",
             "notifications_sent": {},
             "reviewer_notes": "",
-            "reviewer_name": ""
+            "reviewer_name": "",
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
         }
         
         review_store.save_record(record_id, record)
@@ -198,7 +213,8 @@ def approve_record(
             "roadmap": plan,
             "notifications_sent": notify.send_all_notifications(extracted),
             "reviewer_notes": notes,
-            "reviewer_name": reviewer
+            "reviewer_name": reviewer,
+            "updated_at": datetime.utcnow().isoformat(),
         })
         
         review_store.save_record(record_id, record)
@@ -217,7 +233,8 @@ def approve_record(
         record.update({
             "status": "rejected",
             "reviewer_notes": notes,
-            "reviewer_name": reviewer
+            "reviewer_name": reviewer,
+            "updated_at": datetime.utcnow().isoformat(),
         })
         
         review_store.save_record(record_id, record)

@@ -43,10 +43,9 @@
     h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
     .sub { color: var(--muted); font-size: 13px; }
     main {
-      max-width: 1180px; margin: 0 auto; padding: 26px 20px 80px;
-      display: grid; grid-template-columns: 1.15fr .85fr; gap: 22px;
+      max-width: 1000px; margin: 0 auto; padding: 26px 20px 80px;
+      display: flex; flex-direction: column; gap: 22px;
     }
-    @media (max-width: 920px) { main { grid-template-columns: 1fr; } }
     .card {
       background: linear-gradient(180deg, var(--panel), var(--panel-2));
       border: 1px solid var(--border);
@@ -190,34 +189,14 @@
     <div class="row">
       <div class="logo">AI</div>
       <div>
-        <h1>AI Onboarding Automation</h1>
+        <h1>HR Admin Dashboard <a href="/onboarding" style="font-size:12px; margin-left: 10px; color: var(--accent); text-decoration: none;">View Employee Portal ↗</a></h1>
         <div class="sub" id="health">HR Console · connecting…</div>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- LEFT: Intake + Result -->
-    <div class="col">
-      <section class="card">
-        <h2>① New Hire Intake</h2>
-        <label for="raw">Paste raw intake text (form submission, email, or scanned-document text)</label>
-        <textarea id="raw" placeholder="e.g. Ayesha Raza, ayesha.raza@gmail.com, Backend Engineer, Engineering, Islamabad, manager Sarah Chen, full-time, starts 2026-07-15"></textarea>
-        <div id="inline-error" class="error-msg"></div>
-        <div class="examples">
-          <span class="chip" data-fill="high">Try: clean intake (auto-approve)</span>
-          <span class="chip" data-fill="low">Try: messy intake (needs review)</span>
-          <span class="chip" data-fill="empty">Try: empty (validation error)</span>
-        </div>
-        <div class="row-between">
-          <span class="sub" style="font-size:12px">AI extracts fields · scores confidence · routes automatically</span>
-          <button id="submit">Process Intake →</button>
-        </div>
-        <div id="result" class="result hidden"></div>
-      </section>
-    </div>
-
-    <!-- RIGHT: Tabs for Pending / All records / Audit -->
+    <!-- Admin Dashboard Tabs -->
     <div class="col">
       <section class="card">
         <div class="tabs">
@@ -461,49 +440,12 @@ window.decide = function (id, decision) {
   }).catch(function (e) { toast("✗ Failed: " + e); });
 };
 
-// ── Submit ──────────────────────────────────────────────────────
-$("submit").onclick = function () {
-  var raw = $("raw").value;
-  var btn = $("submit");
-  $("inline-error").style.display = "none";
-  if (!raw.trim()) {
-    $("inline-error").textContent = "Please enter intake text.";
-    $("inline-error").style.display = "block";
-    return;
-  }
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> AI is extracting fields…';
-  fetch("/intake", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ raw_text: raw })
-  }).then(function (r) {
-    if (r.status === 422) {
-      return r.json().then(function (e) {
-        $("inline-error").textContent = e.detail || "Validation Error";
-        $("inline-error").style.display = "block";
-      });
-    }
-    return r.json().then(function (d) {
-      renderResult(d);
-      loadTab(activeTab());
-      toast("✓ Intake processed");
-    });
-  }).catch(function (e) {
-    $("result").innerHTML = '<div class="badge b-red">Request failed</div><div class="meta">' + escapeHtml(e) + "</div>";
-    $("result").classList.remove("hidden");
-  }).then(function () {
-    btn.disabled = false;
-    btn.textContent = "Process Intake →";
-  });
-};
+// Intake submission code removed for HR Dashboard
+// All forms are submitted via the /onboarding portal
 
 $("refresh").onclick = function () { loadTab(activeTab()); };
 
-var chips = document.querySelectorAll(".chip");
-for (var k = 0; k < chips.length; k++) {
-  chips[k].onclick = function () { $("raw").value = samples[this.dataset.fill] || ""; $("raw").focus(); };
-}
+// Samples code removed
 
 function toast(msg) {
   var t = $("toast");
