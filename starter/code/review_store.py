@@ -6,50 +6,89 @@ Designed for prototyping — swap with a database-backed implementation for
 production use.
 """
 
-import threading
+import json
 from typing import Optional
+from database import SessionLocal, OnboardingRecord, engine, Base
 
-# ── Module-level state ──────────────────────────────────────────────────────
-_store: dict[str, dict] = {}
-_lock = threading.Lock()
-
+def _to_dict(record: OnboardingRecord) -> dict:
+    if not record:
+        return None
+    return {
+        "record_id": record.id,
+        "status": record.status,
+        "extracted_data": json.loads(record.extracted_data) if record.extracted_data else {},
+        "role_context": json.loads(record.role_context) if record.role_context else {},
+        "roadmap": record.roadmap,
+        "notifications_sent": json.loads(record.notifications_sent) if record.notifications_sent else {},
+        "reviewer_name": record.reviewer_name,
+        "reviewer_notes": record.reviewer_notes,
+        "created_at": record.created_at,
+        "updated_at": record.updated_at
+    }
 
 def save_record(record_id: str, record_data: dict) -> None:
     """
     Persist (insert or update) an onboarding record.
-
-    Args:
-        record_id: Unique identifier for the record.
-        record_data: Full record payload to store.
     """
-    with _lock:
-        _store[record_id] = record_data
+    db = SessionLocal()
+    try:
+        record = db.query(OnboardingRecord).filter(OnboardingRecord.id == record_id).first()
+        if not record:
+            record = OnboardingRecord(id=record_id)
+            db.add(record)
+        
+        record.status = record_data.get("status")
+        record.extracted_data = json.dumps(record_data.get("extracted_data", {}))
+        record.role_context = json.dumps(record_data.get("role_context", {}))
+        record.roadmap = record_data.get("roadmap")
+        record.notifications_sent = json.dumps(record_data.get("notifications_sent", {}))
+        record.reviewer_name = record_data.get("reviewer_name")
+        record.reviewer_notes = record_data.get("reviewer_notes")
+        record.created_at = record_data.get("created_at")
+        record.updated_at = record_data.get("updated_at")
+        
+        db.commit()
+    finally:
+        db.close()
 
 
 def get_record(record_id: str) -> Optional[dict]:
     """
     Retrieve a single record by its ID.
-
-    Returns:
-        The record dict if found, otherwise ``None``.
     """
-    with _lock:
-        return _store.get(record_id)
+    db = SessionLocal()
+    try:
+        record = db.query(OnboardingRecord).filter(OnboardingRecord.id == record_id).first()
+        return _to_dict(record)
+    finally:
+        db.close()
 
 
 def list_records() -> list[dict]:
     """Return a list of all stored records (snapshot)."""
-    with _lock:
-        return list(_store.values())
+    db = SessionLocal()
+    try:
+        records = db.query(OnboardingRecord).all()
+        return [_to_dict(r) for r in records]
+    finally:
+        db.close()
 
 
 def list_pending() -> list[dict]:
     """Return only records whose status is ``pending_review``."""
-    with _lock:
-        return [r for r in _store.values() if r.get("status") == "pending_review"]
+    db = SessionLocal()
+    try:
+        records = db.query(OnboardingRecord).filter(OnboardingRecord.status == "pending_review").all()
+        return [_to_dict(r) for r in records]
+    finally:
+        db.close()
 
 
 def clear_store() -> None:
-    """Remove all records.  Primarily used by tests."""
-    with _lock:
-        _store.clear()
+    """Remove all records. Primarily used by tests."""
+    db = SessionLocal()
+    try:
+        db.query(OnboardingRecord).delete()
+        db.commit()
+    finally:
+        db.close()

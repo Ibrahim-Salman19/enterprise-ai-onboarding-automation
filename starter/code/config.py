@@ -14,7 +14,19 @@ load_dotenv()
 # ── Groq / LLM Settings ─────────────────────────────────────────────────────
 GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE_URL: str = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
-MODEL_NAME: str = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
+# Default to a current, stable Groq production model.
+# Note: `llama-3.3-70b-versatile` was deprecated by Groq on 2026-06-17; `openai/gpt-oss-120b`
+# is an actively supported production model that also exposes native `structured_outputs`,
+# which makes deterministic JSON extraction more reliable.
+MODEL_NAME: str = os.getenv("MODEL_NAME", "openai/gpt-oss-120b")
+# Reasoning models (gpt-oss family) emit hidden reasoning tokens before the visible answer,
+# so the completion budget must be large enough to cover both. Reserved for use in
+# extractor.py / roadmap.py when calling the API.
+MODEL_MAX_TOKENS: int = int(os.getenv("MODEL_MAX_TOKENS", "1024"))
 
 # ── Business-Rule Thresholds ────────────────────────────────────────────────
 CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.80"))
+
+# ── Integrations ────────────────────────────────────────────────────────────
+SLACK_WEBHOOK_URL: str = os.getenv("SLACK_WEBHOOK_URL", "")
+RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")

@@ -12,3 +12,6 @@ build/
 .pytest_cache/
 agent-handoff.md
 starter/plan.md
+plan2.md
+plan*.md
+!starter/prompts/prompts.md

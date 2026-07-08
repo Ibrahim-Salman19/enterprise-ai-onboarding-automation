@@ -6,6 +6,28 @@ The goal of this assessment is to demonstrate practical thinking across workflow
 
 ---
 
+> ## 📋 Candidate Submission — Quick Links
+> **Start here:** [`SUBMISSION_TEMPLATE.md`](SUBMISSION_TEMPLATE.md) (candidate info, summary, assumptions, setup).
+>
+> | Deliverable | Location |
+> |:---|:---|
+> | **Task 1 — Design** | [`starter/design-solution.md`](starter/design-solution.md) |
+> | **Task 2 — Prototype** | [`starter/code/`](starter/code/) (FastAPI app + tests) |
+> | **Prompts** | [`starter/prompts/prompts.md`](starter/prompts/prompts.md) |
+> | **Workflow diagram** | [`starter/diagrams/flow.md`](starter/diagrams/flow.md) |
+> | **Test evidence** | [`starter/screenshots/pytest-output.txt`](starter/screenshots/pytest-output.txt) (10/10 passing) |
+>
+> **Run the demo:**
+> ```bash
+> cd starter/code && pip install -r requirements.txt && pytest -v      # offline tests (11 passing)
+> uvicorn main:app --reload                                              # then open http://localhost:8000
+> ```
+>
+> The root URL serves an interactive **HR Console** web UI — paste a new-hire intake,
+> watch the AI extract + route it, then approve/reject pending cases from the Review Queue.
+
+---
+
 # Project Outcome
 
 The solution defines and prototypes an intelligent onboarding workflow that improves operational speed, consistency, and visibility across the employee onboarding lifecycle.

@@ -6,7 +6,9 @@ approvals, query historical records, and inspect system audit logs.
 """
 
 import uuid
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from openai import OpenAI
 
@@ -18,12 +20,17 @@ import role_context
 import extractor
 import validator
 import roadmap
+from database import init_db
 
 app = FastAPI(
     title="AI Onboarding Automation API",
     description="Backend API for automated document extraction, validation routing, and personalized onboarding roadmap synthesis.",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+def startup_event():
+    init_db()
 
 
 # ── Schemas ─────────────────────────────────────────────────────────────────
@@ -44,6 +51,13 @@ def get_llm_client_dependency() -> OpenAI:
 
 
 # ── Endpoints ───────────────────────────────────────────────────────────────
+@app.get("/", response_class=HTMLResponse)
+def home():
+    """Serve the HR Console web UI (single-page app in templates/index.html)."""
+    ui_path = Path(__file__).parent / "templates" / "index.html"
+    return HTMLResponse(ui_path.read_text(encoding="utf-8"))
+
+
 @app.get("/health")
 def health_check():
     """System health check and configuration summary."""

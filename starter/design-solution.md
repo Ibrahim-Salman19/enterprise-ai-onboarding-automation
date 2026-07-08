@@ -5,11 +5,13 @@
 
 ### 1. Executive Summary & Core Intent
 
-In mid-sized enterprises (500–2,000 employees), employee onboarding is historically a fragmented, manual process spanning HR, IT, Compliance, and Department Managers. A manual onboarding workflow demands roughly 10 hours of HR coordination and 3.5 hours of IT provisioning per new hire. By transitioning to an event-driven, AI-native orchestration architecture, the administrative lifecycle is compressed: active HR involvement falls to under 2 hours, and IT setup is reduced to under 30 minutes, representing a capacity recovery of over 80%.
+In mid-sized enterprises (500–2,000 employees), employee onboarding is historically a fragmented, manual process spanning HR, IT, Compliance, and Department Managers. The quality problem is well documented: in Gallup's research, **only 12% of employees strongly agree that their organization does a great job onboarding new employees** ("Why the Onboarding Experience Is Key for Retention," Gallup), and roughly **one in five report their most recent onboarding was poor or nonexistent**. Brandon Hall Group research is frequently cited finding that organizations with a strong onboarding process improve new-hire retention by **82%** and productivity by **over 70%** — indicating the size of the prize for getting onboarding right.
 
-This technical design outlines a hybrid automation architecture using a self-hosted **n8n v2.x** orchestration engine integrated with stateful record-keeping systems (such as Airtable or BambooHR) and advanced multimodal Large Language Models (LLMs). The core intent is to automate document ingestion, clean intake data, dynamically provision workspace access, and synthesize highly personalized 30/60/90-day roadmaps while maintaining strict regulatory compliance (under CCPA/CPRA, GDPR, Illinois IHRA, and the EU AI Act) and ensuring enterprise-grade fault tolerance.
+By transitioning to an event-driven, AI-assisted orchestration architecture, the administrative lifecycle is compressed and made consistent: AI handles extraction, normalization, and personalization; deterministic code handles validation and routing; and humans are kept in the loop only for the decisions that genuinely need judgment.
 
-**FastAPI Python Prototype Demo:** To validate the core orchestration logic, schema parsing, routing decisions, and personalized plan synthesis, a local functional prototype has been implemented in Python using FastAPI (located in `starter/code/`). The prototype utilizes Groq's API (model: `llama-3.3-70b-versatile`) to perform field extraction and onboarding plan generation.
+This technical design outlines a hybrid automation architecture using a self-hosted **n8n** orchestration engine integrated with stateful record-keeping systems (such as Airtable or BambooHR) and Large Language Models (LLMs). The core intent is to automate document ingestion, clean intake data, route tasks to the right downstream owner, and synthesize personalized 30/60/90-day roadmaps while maintaining strict regulatory compliance (under CCPA/CPRA, GDPR, Illinois IHRA, and the EU AI Act) and ensuring enterprise-grade fault tolerance.
+
+**FastAPI Python Prototype Demo:** To validate the core orchestration logic, schema parsing, routing decisions, and personalized plan synthesis, a local functional prototype has been implemented in Python using FastAPI (located in `starter/code/`). The prototype utilizes Groq's API (model: `openai/gpt-oss-120b`, a current production model with native structured-output support) to perform field extraction and onboarding plan generation.
 
 ---
 
@@ -101,14 +103,15 @@ AI is utilized selectively in this architecture where traditional rule-based pro
 | Operational Segment | AI Implementation Pattern | Architectural Advantages | Failure Mitigation & Guardrails |
 | :--- | :--- | :--- | :--- |
 | **Document Processing & OCR** | Multimodal Visual LLM Ingestion (Gemini 2.5 Flash / GPT-4o) | Successfully extracts structured key-value data from crumpled, rotated, or low-resolution smartphone photographs of IDs and forms. Bypasses the need to maintain rigid spatial templates for every potential form layout. | Visual hallucination risk is mitigated by using a deterministic output schema (JSON Schema) and forwarding any validation anomalies or low-confidence extractions ($< 85\%$) to Slack for manual verification. |
-| **Input Normalization** | Zero-shot Semantic Correction | Resolves inconsistent text entries (e.g., mapping "Sftwr Dev", "Software Dev 2", and "SWE-II" to the standard corporate role "Software Engineer II") and formats phone numbers, addresses, and dates. | Sanitization node filters output structures using JavaScript code and standard regex validations prior to database sync. |
+| **Input Normalization & Extraction** | Pydantic Structured Outputs | Eliminates prompt-and-pray fragility by forcing the LLM to output valid JSON matching an explicit schema (e.g., `ExtractedEmployee`). | Type validation enforces field presence; any unparseable output falls back to manual review. |
+| **Confidence Anchoring** | Self-Assessed Scoring via Schema | The schema demands a `confidence_score` float (0.0-1.0). The model evaluates its own extraction quality. | Any score $< 0.80$ automatically triggers the Human-In-The-Loop (HITL) review flow. |
 | **Personalization Engine** | Contextual Prompt Completion | Synthesizes role-specific 30/60/90-day onboarding roadmaps by cross-referencing candidate background (resume/interview notes) with the target department's core tech stack and objectives. | Generates output in markdown structure restricted by formatting instructions. System templates and cached instructions ensure consistency and control output lengths. |
 | **Automated Communication** | Dynamic Email/Slack Drafting | Generates personalized, professional emails to the candidate, warm-welcome team notes, and specific task lists for managers. | Uses pre-defined layout headers and trailers, injecting the AI-generated copy only inside designated template blocks. |
 
 #### Evaluation of Extraction Frameworks: LLMs vs. Cloud-Native IDP
-*   **Azure AI Document Intelligence / AWS Textract:** Highly accurate on standard documents (e.g., clean W-2 tax forms) and cost-effective ($0.01$ to $0.015$ USD per page). However, they are brittle when encountering hand-written, skewed, or unstandardized forms.
-*   **Multimodal LLMs (Gemini / Claude):** Superior layout comprehension and semantic reasoning. Using high-efficiency models like **Gemini 2.0 Flash** keeps pricing extremely low ($\approx 0.00017$ USD per page, or roughly 6,000 pages per $1.00$ USD).
-*   **Compilation Latency:** LangChain output parsers compiling dynamic JSON schemas can introduce up to 10 seconds of compilation latency on the initial request. Subsequent calls execute using cached grammars, dropping latency to standard inference speeds.
+*   **Azure AI Document Intelligence / AWS Textract:** Highly accurate on standard, well-structured documents (e.g., clean tax or government forms) and cost-effective at scale (order of ~$0.01 per page, per public pricing tiers). However, they are brittle when encountering hand-written, skewed, or unstandardized forms.
+*   **Multimodal LLMs (Gemini / Claude / GPT-OSS family):** Superior layout comprehension and semantic reasoning on messy input. High-efficiency models keep per-page cost extremely low (a small fraction of a cent per page at current public pricing), making them attractive for variable-quality intake. Verify exact figures against the provider's published pricing at deployment time.
+*   **Compilation Latency:** output parsers compiling dynamic JSON schemas can introduce one-time compilation latency on the first request; subsequent calls reuse the cached grammar and run at standard inference speeds.
 
 ---
 
@@ -117,7 +120,7 @@ AI is utilized selectively in this architecture where traditional rule-based pro
 Two primary prompts drive the system's AI engines. The prompts utilize clear system roles, strict formatting parameters, few-shot examples, and robust exception-handling instructions to ensure reliable outputs.
 
 #### Prompt 1: Document Intake Extraction & Validation
-*   **Target File Reference:** [prompts.md](file:///mnt/c/Users/hafiz/Task1_interview/enterprise-ai-onboarding-automation/starter/prompts/prompts.md#L1-L45)
+*   **Target File Reference:** [prompts.md](prompts/prompts.md)
 *   **Objective:** Ingest raw text or visual tokens from scanned files and output validated, clean JSON.
 
 ```text
@@ -144,7 +147,7 @@ Input Document text/image:
 ```
 
 #### Prompt 2: Personalized 30/60/90-Day Roadmap Synthesis
-*   **Target File Reference:** [prompts.md](file:///mnt/c/Users/hafiz/Task1_interview/enterprise-ai-onboarding-automation/starter/prompts/prompts.md#L47-L95)
+*   **Target File Reference:** [prompts.md](prompts/prompts.md)
 *   **Objective:** Ingest sanitized candidate details and output a structured onboarding roadmap in markdown format.
 
 ```text
@@ -175,51 +178,51 @@ Guidelines:
 
 Data moves asynchronously across five core platforms to coordinate onboarding tasks:
 
-1.  **HR Intake Portal / Webhook Ingestion:** Ingests forms and documents. Delivers JSON and file binaries to the n8n orchestrator.
-2.  **n8n Orchestrator (Self-Hosted):** Houses the central execution state. Coordinates LLM API calls, applies sanitization code, manages wait states, and routes requests downstream.
-3.  **Airtable / BambooHR Core (Database of Record):** Maintains the source-of-truth records for all personnel. Integrates via REST APIs to search candidate history, map records, and update onboarding statuses.
-4.  **Slack Integration (Interactive Approvals):** Displays interactive blocks to the HR operations channel when manual review is triggered. Sends button clicks back to n8n via a static webhook receiver.
-5.  **Google Workspace (Gmail & Google Calendar):** Sends localized welcome emails containing the synthesized roadmaps and schedules introductory syncs and check-ins directly on the employee's calendar.
+1.  **HR Intake Portal / Webhook Ingestion:** Ingests forms and documents. Delivers JSON and file binaries to the orchestrator.
+2.  **FastAPI Orchestrator (Python Prototype):** Houses the central execution state. Coordinates LLM API calls, manages validation gates, routes records to the SQLite database, and handles the manual review (HITL) endpoints.
+3.  **SQLite (Persistence Layer):** Maintains the source-of-truth records for all personnel and the immutable audit trail. (In production, this swaps to Postgres).
+4.  **Slack Integration (Real Webhook):** Posts dynamic welcome messages to a target Slack channel when candidates are approved. *Production path:* Slack SCIM Enterprise Grid integration for automated account provisioning.
+5.  **Resend (Real Email API):** Fires personalized HTML welcome packets containing the AI-generated roadmap to the new hire's inbox. *Production path:* Dedicated domain validation and SES/SMTP integration.
+6.  **Google Calendar (Mocked):** Simulates scheduling orientation syncs. *Production path:* Google Calendar API via a Service Account with Domain-Wide Delegation to manage employee calendars.
 
 ---
 
-### 6. Operational Benefits & TCO Analysis
+### 6. Operational Benefits & Build-vs-Buy Evaluation
 
-#### Cost Modeling & Build-vs-Buy Evaluation
-A scaling organization of 200 employees onboarding 50 hires per year faces high recurring software licensing costs when relying solely on commercial platforms (like Rippling or BambooHR Elite). These suites charge per-employee-per-month (PEPM) fees, which scale linearly as headcount grows.
+#### Build-vs-Buy Framing
+Two paths exist for an organization standardizing onboarding:
 
-A hybrid architecture—retaining a basic commercial HRIS for payroll/tax compliance while deploying a custom, self-hosted n8n engine to manage AI personalization, systems provisioning, and document validation—delivers substantial financial savings over a three-year timeline:
+- **Buy — all-in-one commercial HCM/IT suites** (e.g., Rippling, BambooHR Elite). These are fast to stand up and bundle payroll, compliance, and provisioning, but they bill **per-employee-per-month (PEPM)**, so licensing cost scales linearly and indefinitely with headcount, and onboarding workflows are constrained to what the vendor exposes.
+- **Build — a custom automation layer** (self-hosted n8n + an LLM API) layered over a basic HRIS that handles only payroll/tax compliance. This carries a one-time engineering cost and ongoing maintenance, but the marginal cost per new hire is dominated by (cheap) LLM tokens rather than PEPM licenses, and the workflow is fully customizable.
 
-```
-3-Year TCO Comparison:
-Option A: Rippling (HCM/IT)       ██████████████████████████████ $154,000.00
-Option B: BambooHR (Elite)        ██████████████████████████████████ $185,000.00
-Option C: Custom (n8n Business)   ██████████████████ $102,910.50
-Option D: Custom (n8n Community)  ███████████ $74,110.50
-```
+The right choice depends on volume and customization needs: **Buy** wins when headcount is small and requirements fit the vendor's mold; **Build** wins at scale or when onboarding logic needs to differ by role, geography, or business unit. This design assumes the latter and implements the orchestration logic in the prototype under `starter/code/`.
 
-*   **Engineering Setup Cost:** Deploys in 6 weeks ($28,800 USD based on 240 hours of developer labor at $120/hr).
-*   **DevOps Maintenance:** Budgeted at 10 hours/month ($43,200 USD over 3 years).
-*   **LLM API Transactions:** Factoring in server-side prompt caching (caching 9,000 system-prompt tokens out of a 10,000-token context window), each LLM call costs $0.0207 USD. For 50 hires/yr executing 100 calls/hire, the 3-year LLM token expenditure is only $310.50 USD.
-*   **Net Financial Advantage:** The custom self-hosted n8n Community build yields a **3-year savings of $79,889.50 USD** compared to Option A, and **$110,889.50 USD** compared to Option B.
+> **Note on cost estimates:** A defensible dollar TCO requires the target customer's actual headcount, PEPM pricing, and engineering rates, which vary widely. Rather than present invented precision here, the recommendation is to compute it per-deployment using the model above (one-time build cost + monthly maintenance + per-hire LLM tokens, against PEPM × headcount × months). The LLM cost component is trivially small at any realistic volume — Groq's `gpt-oss-120b` lists at roughly **$0.15 / 1M input tokens**, so even hundreds of onboarding completions per month cost well under a dollar.
 
-#### Quantified ROI & Time Savings
-*   **HR Capacity Recovery:** Automating document collation, profile creation, and status updates reduces manual HR administrative effort from **10 hours to under 2 hours per hire**.
-*   **IT Labor Reduction:** Automated workspace creation and application provisioning compress IT labor from **3.5 hours to under 30 minutes per hire**.
-*   **Acceleration of Ramp-to-Productivity:** Dynamically tailored 30/60/90-day roadmaps and automated account setups accelerate employee contribution cycles by **34%**, reducing the typical knowledge worker's training ramp.
-*   **Attrition Mitigation:** Structured, engaging onboarding experiences improve first-year new-hire retention by **82%**, preventing early attrition costs (which average 50% to 200% of an employee's annual salary).
+#### Operational Impact (Industry Research)
+Rather than quote unverifiable per-hire hour savings, the case rests on widely-cited onboarding research:
+
+| Outcome | Finding | Source |
+|:---|:---|:---|
+| **Onboarding quality gap** | Only **12%** of employees strongly agree their organization does a great job onboarding new hires. | Gallup — *Why the Onboarding Experience Is Key for Retention* |
+| **Retention uplift** | Organizations with a strong onboarding process improve new-hire retention by **82%**. | Brandon Hall Group (widely cited) |
+| **Productivity uplift** | The same research links strong onboarding to **70%+** productivity gains. | Brandon Hall Group (widely cited) |
+
+The architecture targets exactly these levers: structured, consistent, automated onboarding (closing the quality gap), personalized 30/60/90-day plans (driving faster productivity), and reduced manual coordination (freeing HR/IT capacity). Per-organization quantification should be measured post-deployment against the customer's own baseline.
 
 ---
 
 ### 7. Security, Compliance, and Data Sovereignty
 
-Processing sensitive employee personally identifiable information (PII) requires strict data isolation protocols:
+Processing sensitive employee personally identifiable information (PII) requires strict data isolation protocols and mapping to regulatory frameworks. The architecture addresses the following regimes:
 
-*   **Multi-Jurisdictional Notice Compliance:** System interfaces deploy conditional notices matching the candidate's residence (under CCPA/CPRA, Colorado SB 26-189, Illinois IHRA, and EU AI Act Articles 26/50).
-*   **PII Masking & Scrubbing:** Before routing text strings to external LLM APIs, a local Named Entity Recognition (NER) step redacts direct identifiers (SSNs, passport numbers, birth dates). For geographic inputs, the system programmatically scrubs zip codes to prevent proxy-based algorithmic discrimination.
-*   **Zero Data Retention (ZDR):** LLM API requests are configured with the `store: false` parameter to disable provider-side logging. Secure enterprise API agreements are established to enforce Zero Data Retention and prevent data from being used for model training.
-*   **Auditability & Logging:** All automated decisions, parameters, notices, and human overrides are written to an encrypted, write-once-read-many (WORM) database with a minimum retention schedule of 4 years to meet Illinois IHRA requirements.
-*   **Sovereign Cloud Topologies:** The entire n8n stack and PostgreSQL state databases are deployed within containerized private clouds (e.g., self-hosted AWS ECS or Kubernetes Helm setups) in localized regions (such as Ireland/Frankfurt for EU residents), preventing cross-border data leakage.
+*   **GDPR Article 22 & SCHUFA Ruling (Automated Decision Making):** GDPR restricts "solely automated decisions" producing legal/significant effects. *Implementation:* We implement a Human-In-The-Loop (HITL) step for any low-confidence extraction or ambiguity. The audit log explicitly records the `override` flag indicating whether the final decision was automated or human-reviewed.
+*   **EU AI Act (Annex III High-Risk Systems):** AI systems used for employment and worker management are classified as High-Risk. *Implementation:* The system maintains a rigorous audit trail of every automated action, confidence score, and model version to ensure traceability and human oversight.
+*   **Illinois HB 3773 & CPRA (Disparate Impact & ADMT):** Regulations require tracking of Automated Decision-Making Technology and preventing proxy discrimination. *Implementation:* We retain an immutable log of all decisions for a minimum 4-year retention schedule (as mandated by Illinois IHRA).
+*   **Zero Data Retention (ZDR):** LLM API requests are configured with the `store: false` parameter (when supported by the provider endpoint) to disable provider-side logging and prevent candidate PII from being used for model training.
+*   **Future Enhancements (Not Yet Implemented):**
+    *   **PII Masking & Scrubbing (NER):** A local Named Entity Recognition (NER) step to redact direct identifiers (SSNs, birth dates) before routing to external APIs.
+    *   **WORM & Hash-Chaining:** Cryptographically linking audit entries in a Write-Once-Read-Many database to guarantee absolute immutability.
 
 ---
 
@@ -227,7 +230,17 @@ Processing sensitive employee personally identifiable information (PII) requires
 
 Enterprise-grade deployments must remain resilient during downstream API outages or execution errors:
 
-*   **Node-Level Retries:** All critical integrations (such as Airtable lookup, Jira API, and LLM endpoints) are configured with automatic retry-on-fail policies (3 retries with a 5000ms delay) to handle transient network issues.
-*   **Graceful Degradation ("Continue on Fail"):** Non-critical notifications (such as Slack channel alerts or calendar updates) use the `Continue on Fail` setting. If Slack suffers an outage, the system logs the error but continues processing the core onboarding steps.
-*   **Global Error Handling:** The workflow registers a central `Error Trigger` node (`n8n-nodes-base.errortrigger`). If any node fails after retries, the error workflow intercepts the event, writes the failure parameters (Execution ID, Workflow Name, Failing Node, Error Message) to a central administrative table, and issues a high-priority webhook alert to PagerDuty or the DevOps operations channel.
-*   **State Recovery & Serialization:** n8n v2.x serializes execution states to a PostgreSQL database for any wait states exceeding 65 seconds. If the application container crashes, the state is preserved, and the workflow resumes from the exact checkpoint upon container recovery.
+*   **Node-Level Retries:** All critical integrations are configured with automatic retry-on-fail policies to handle transient network issues.
+*   **Graceful Degradation ("Fail-Open"):** Non-critical notifications (such as Slack channel alerts or calendar updates) are feature-flagged and wrapped in `try/except` blocks. If an API key is missing or the external service is down, the system logs a `[MOCK-failed]` warning but does not crash the core onboarding flow.
+*   **Database Persistence:** Utilizing a robust RDBMS (SQLite for the prototype, Postgres for production) guarantees that execution state and audit logs survive unexpected server restarts.
+
+---
+
+### 9. Engineering Decisions & Tradeoffs
+
+This prototype leverages specific technical choices to optimize for demonstration impact and developer velocity:
+
+*   **FastAPI vs. n8n:** While n8n is the proposed visual orchestration engine for production (to empower non-technical HR ops teams), FastAPI was selected for the runnable prototype. It provides full control over the execution loop, typing, and async handling, proving the logic in a way that reviewers can instantly run and verify without importing proprietary n8n JSON schemas.
+*   **SQLite vs. Postgres:** SQLite is embedded directly into the repository. It proves the system is stateful and survives restarts, without requiring the reviewer to spin up a Dockerized Postgres container. A standard SQLAlchemy ORM is used, meaning the path to Postgres is just a single connection string change.
+*   **Resend vs. SMTP:** Resend offers a modern, API-first approach to transactional emails. It eliminates the traditional pain points of configuring SMTP servers, managing TLS handshakes, and risking spam filtering during development.
+*   **Mocks where Mocked:** Google Calendar integration requires extensive OAuth2 setup, domain-wide delegation, and service accounts. To keep the focus on the AI integration and avoid scope creep, calendar provisioning remains gracefully mocked, proving the interface boundary without the administrative overhead.
