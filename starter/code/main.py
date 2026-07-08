@@ -8,11 +8,10 @@ approvals, query historical records, and inspect system audit logs.
 import uuid
 import io
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from openai import OpenAI
 
@@ -43,13 +42,6 @@ app = FastAPI(
 
 # ── Security & Middleware ───────────────────────────────────────────────────
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Restrict this in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
@@ -126,21 +118,22 @@ def login(req: LoginRequest):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.post("/intake")
-def process_intake(
-    req: IntakeRequest,
-    client: OpenAI = Depends(get_llm_client_dependency)
-):
-    """
-    Ingest raw candidate text, perform LLM extraction, validate, and route
-    to either auto-approval or manual HR review.
-    """
-    raw_text = req.raw_text.strip()
-    
+def _process_intake_logic(
+    raw_text: str,
+    client: OpenAI,
+    document_uploaded: bool
+) -> dict:
+    raw_text_clean = raw_text.strip()
+    if not raw_text_clean:
+        raise HTTPException(
+            status_code=422,
+            detail="raw_text cannot be empty or whitespace-only"
+        )
+
     record_id = str(uuid.uuid4())
     
-    if req.document_uploaded:
-        raw_text += "\n[OCR System: ID Document Verified]"
+    if document_uploaded:
+        raw_text_clean += "\n[OCR System: ID Document Verified]"
         audit_log.append_audit(
             actor="system",
             action="document_verified",
@@ -151,14 +144,8 @@ def process_intake(
             override=False
         )
 
-    if not raw_text:
-        raise HTTPException(
-            status_code=422,
-            detail="raw_text cannot be empty or whitespace-only"
-        )
-
     # 1. Run LLM Field Extraction
-    extracted = extractor.extract_fields(raw_text, client=client)
+    extracted = extractor.extract_fields(raw_text_clean, client=client)
 
     # 2. Perform Routing Decision
     route = validator.route_decision(extracted, confidence_threshold=config.CONFIDENCE_THRESHOLD)
@@ -182,8 +169,8 @@ def process_intake(
             "roadmap": plan,
             "reviewer_notes": "Automatically approved by system.",
             "reviewer_name": "system",
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
         
         # Fire notifications with Continue on Fail
@@ -218,8 +205,8 @@ def process_intake(
             "roadmap": "",
             "reviewer_notes": "",
             "reviewer_name": "",
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
         # Save before notifications to ensure idempotency / checkpoint
         review_store.save_record(record_id, record)
@@ -245,6 +232,19 @@ def process_intake(
 
     return record
 
+
+@app.post("/intake")
+def process_intake(
+    req: IntakeRequest,
+    client: OpenAI = Depends(get_llm_client_dependency)
+):
+    """
+    Ingest raw candidate text, perform LLM extraction, validate, and route
+    to either auto-approval or manual HR review.
+    """
+    return _process_intake_logic(req.raw_text, client, req.document_uploaded)
+
+
 @app.post("/webhooks/hris")
 def process_hris_webhook(
     payload: HRISWebhookPayload,
@@ -259,9 +259,7 @@ def process_hris_webhook(
         
     raw_text = f"Name: {payload.name}\nEmail: {payload.email}\nRole: {payload.role}\nDepartment: {payload.department}\nStart Date: {payload.start_date}\n[Source: HRIS Webhook Automation]"
     
-    # Re-use the existing intake process internally
-    intake_req = IntakeRequest(raw_text=raw_text, document_uploaded=False)
-    return process_intake(intake_req, client=client)
+    return _process_intake_logic(raw_text, client, document_uploaded=False)
 
 
 @app.post("/approve/{record_id}")
@@ -306,7 +304,7 @@ def approve_record(
             "roadmap": plan,
             "reviewer_notes": notes,
             "reviewer_name": reviewer,
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         })
         # Save before notifications to ensure idempotency / checkpoint
         review_store.save_record(record_id, record)
@@ -346,7 +344,7 @@ def approve_record(
             "status": "rejected",
             "reviewer_notes": notes,
             "reviewer_name": reviewer,
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         })
         
         review_store.save_record(record_id, record)
@@ -410,17 +408,16 @@ def offboard_employee(record_id: str, admin: str = Depends(auth.get_current_admi
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
     
+    if record.get("status") == "offboarded":
+        raise HTTPException(status_code=409, detail="Record is already offboarded.")
+    
     try:
-        notify._send_slack_block_kit(
-            [{"type": "section", "text": {"type": "mrkdwn", "text": f"🔴 *OFFBOARDING TRIGGERED*\nRevoke all system access immediately for: {record.get('extracted_data', {}).get('name', 'Unknown')}"}}],
-            "Offboarding Triggered",
-            "#it-provisioning"
-        )
+        notify.send_offboarding_alert(record)
     except Exception as e:
         print(f"Flaky Notification Interruption: {e}")
         
     record["status"] = "offboarded"
-    record["updated_at"] = datetime.utcnow().isoformat()
+    record["updated_at"] = datetime.now(timezone.utc).isoformat()
     review_store.save_record(record_id, record)
     
     audit_log.append_audit(

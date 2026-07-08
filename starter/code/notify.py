@@ -10,12 +10,13 @@ import requests
 import resend
 import re
 import os
-from datetime import datetime, timedelta
+import html
+from datetime import datetime
 from config import SLACK_WEBHOOK_URL, RESEND_API_KEY, IT_EMAIL, HR_EMAIL
 
 logger = logging.getLogger(__name__)
 
-STAGING_MODE = os.environ.get("STAGING_MODE", "true").lower() == "true"
+STAGING_MODE = os.environ.get("STAGING_MODE", "false").lower() == "true"
 STAGING_EMAIL = "staging-test@company.com"
 STAGING_SLACK_CHANNEL = "#staging-alerts"
 
@@ -187,8 +188,9 @@ def send_confirmation_email(record: dict) -> str:
     name = _candidate_name(record)
     email = _candidate_email(record)
     
-    html = f"<p>Hi {name},</p><p>We've received your onboarding profile!</p><p>Our AI is reviewing your details — HR will follow up within 1 business day.</p><p>What to expect next:</p><ul><li>HR Review</li><li>Welcome email with your roadmap</li><li>IT Setup</li></ul><p>Thanks,<br>HR Team</p>"
-    return _send_resend_email(email, f"✅ We've received your onboarding profile, {name}!", html)
+    escaped_name = html.escape(name)
+    html_content = f"<p>Hi {escaped_name},</p><p>We've received your onboarding profile!</p><p>Our AI is reviewing your details — HR will follow up within 1 business day.</p><p>What to expect next:</p><ul><li>HR Review</li><li>Welcome email with your roadmap</li><li>IT Setup</li></ul><p>Thanks,<br>HR Team</p>"
+    return _send_resend_email(email, f"✅ We've received your onboarding profile, {name}!", html_content)
 
 def send_welcome_email(record: dict) -> str:
     name = _candidate_name(record)
@@ -196,8 +198,9 @@ def send_welcome_email(record: dict) -> str:
     roadmap = record.get("roadmap", "")
     roadmap_html = md_to_html(roadmap) if roadmap else "<p>Your roadmap is pending.</p>"
     
-    html = f"<h2>Welcome to the team, {name}! 🎉</h2><p>We are excited to have you on board.</p><h3>Your 30/60/90 Day Roadmap</h3>{roadmap_html}<p>Please reach out if you have any questions before your first day!</p>"
-    return _send_resend_email(email, f"Welcome to the team, {name}! 🎉 Your first 90 days inside", html)
+    escaped_name = html.escape(name)
+    html_content = f"<h2>Welcome to the team, {escaped_name}! 🎉</h2><p>We are excited to have you on board.</p><h3>Your 30/60/90 Day Roadmap</h3>{roadmap_html}<p>Please reach out if you have any questions before your first day!</p>"
+    return _send_resend_email(email, f"Welcome to the team, {name}! 🎉 Your first 90 days inside", html_content)
 
 def send_manager_email(record: dict) -> str:
     name = _candidate_name(record)
@@ -207,8 +210,11 @@ def send_manager_email(record: dict) -> str:
     manager_email = ctx.get("manager_email", HR_EMAIL)
     buddies = ", ".join(ctx.get("default_buddy_pool", []))
     
-    html = f"<p>Hi,</p><p>Action Required: {name} joins your team as {role} on {start_date}.</p><p>Please complete your pre-boarding checklist, including assigning a buddy (suggested pool: {buddies}).</p><p>View their full profile and roadmap in the HR Console.</p>"
-    return _send_resend_email(manager_email, f"Action Required: {name} joins your team on {start_date}", html)
+    escaped_name = html.escape(name)
+    escaped_role = html.escape(role)
+    escaped_start_date = html.escape(start_date)
+    html_content = f"<p>Hi,</p><p>Action Required: {escaped_name} joins your team as {escaped_role} on {escaped_start_date}.</p><p>Please complete your pre-boarding checklist, including assigning a buddy (suggested pool: {buddies}).</p><p>View their full profile and roadmap in the HR Console.</p>"
+    return _send_resend_email(manager_email, f"Action Required: {name} joins your team on {start_date}", html_content)
 
 def send_it_email(record: dict) -> str:
     name = _candidate_name(record)
@@ -217,8 +223,24 @@ def send_it_email(record: dict) -> str:
     ctx = record.get("role_context", {})
     systems = "</li><li>".join(ctx.get("required_systems", []))
     
-    html = f"<p>IT Action Required:</p><p>New Hire: {name} ({role})</p><p>Start Date: {start_date}</p><p>Systems to provision:</p><ul><li>{systems}</li></ul>"
-    return _send_resend_email(IT_EMAIL, f"IT Action Required: {name} starts {start_date} — Systems to provision", html)
+    escaped_name = html.escape(name)
+    escaped_role = html.escape(role)
+    escaped_start_date = html.escape(start_date)
+    html_content = f"<p>IT Action Required:</p><p>New Hire: {escaped_name} ({escaped_role})</p><p>Start Date: {escaped_start_date}</p><p>Systems to provision:</p><ul><li>{systems}</li></ul>"
+    return _send_resend_email(IT_EMAIL, f"IT Action Required: {name} starts {start_date} — Systems to provision", html_content)
+
+def send_offboarding_alert(record: dict) -> str:
+    name = _candidate_name(record)
+    blocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"🔴 *OFFBOARDING TRIGGERED*\nRevoke all system access immediately for: {name}"
+            }
+        }
+    ]
+    return _send_slack_block_kit(blocks, "Offboarding Triggered", channel="#it-provisioning")
 
 def send_all_notifications(record: dict, stage: str = "intake") -> dict:
     """

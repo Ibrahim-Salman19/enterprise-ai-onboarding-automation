@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 class ExtractedEmployee(BaseModel):
     model_config = {"extra": "forbid"}
@@ -11,6 +11,7 @@ class ExtractedEmployee(BaseModel):
     start_date: str = Field(..., description="ISO 8601 YYYY-MM-DD.")
     confidence_score: float = Field(..., ge=0.0, le=1.0)
     missing_fields: List[str] = Field(default_factory=list)
+    extraction_notes: Optional[str] = Field(default=None, description="Notes on the extraction phase.")
 
 class RoadmapSection(BaseModel):
     title: str

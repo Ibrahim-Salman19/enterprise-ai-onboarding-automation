@@ -94,6 +94,13 @@ graph TD
     *   Creates calendar invite events for standard team syncs and orientation.
     *   Publishes status updates to Slack onboarding channels.
 
+#### Additional REST API Endpoints & Core Capabilities
+To transition the prototype from a simple linear script into an interactive, multi-role HR platform, the following production-grade endpoints have been implemented in the API layer:
+1. **JWT-Based Administration Authentication (`POST /auth/login`, `GET /records`, `GET /audit`):** Protects the HR dashboard and compliance logs behind an authentication guard. Admins authenticate via their secure PIN to obtain a signed JSON Web Token (JWT), and all protected routes enforce verification.
+2. **Zero-Touch Ingestion Webhook (`POST /webhooks/hris`):** Listens to external HRIS triggers (e.g., offer acceptance notifications from Workday or BambooHR) and initiates zero-touch onboarding ingestion.
+3. **Automated De-provisioning Offboarding (`POST /offboard/{id}`):** Coordinates employee offboarding. Triggers system-revocation Slack messages to IT, transitions the employee status to `offboarded`, and records the human actor initiating offboarding in the audit trail. Features a strict idempotency status guard to prevent double-offboarding triggers.
+4. **Self-Service FAQ Chatbot (`POST /chat/faq`):** Provides new hires with instant answers to standard policy questions, leveraging low-temperature LLM completions.
+
 ---
 
 ### 3. Where AI is Used: Architectural Analysis

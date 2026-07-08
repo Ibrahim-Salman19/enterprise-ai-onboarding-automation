@@ -1,9 +1,8 @@
 """
-In-memory record store for onboarding records.
+SQLite-backed onboarding record store via SQLAlchemy ORM.
 
-Provides thread-safe CRUD operations backed by a simple Python dictionary.
-Designed for prototyping — swap with a database-backed implementation for
-production use.
+Provides database CRUD operations for storing and managing employee
+onboarding profiles.
 """
 
 import json

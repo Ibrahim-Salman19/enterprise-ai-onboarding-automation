@@ -71,10 +71,11 @@ A runnable **Python + FastAPI** service that implements the full onboarding orch
 ### Files Included
 | File | Purpose |
 |:---|:---|
-| [`starter/code/main.py`](starter/code/main.py) | FastAPI app — `/` (UI), `/intake`, `/approve/{id}`, `/records`, `/audit`, `/health` |
+| [`starter/code/main.py`](starter/code/main.py) | FastAPI app — `/` (UI), `/onboarding` (UI), `/intake`, `/approve/{id}`, `/offboard/{id}`, `/records`, `/records/{id}`, `/stats`, `/chat/faq`, `/audit`, `/export/audit`, `/webhooks/hris`, `/health` |
 | [`starter/code/database.py`](starter/code/database.py) | SQLAlchemy database models and connection |
 | [`starter/code/schemas.py`](starter/code/schemas.py) | Pydantic schemas for structured LLM extraction and validation |
-| [`starter/code/templates/index.html`](starter/code/templates/index.html) | HR Console web UI (intake form, review queue, records, audit trail) |
+| [`starter/code/templates/index.html`](starter/code/templates/index.html) | HR Console web UI (dashboard, review queue, records, audit trail) |
+| [`starter/code/templates/intake.html`](starter/code/templates/intake.html) | Employee Onboarding Portal (multi-step form, upload, FAQ chatbot) |
 | [`starter/code/extractor.py`](starter/code/extractor.py) | LLM field extraction with Pydantic structured output |
 | [`starter/code/validator.py`](starter/code/validator.py) | Regex/length/date validation + confidence-based routing |
 | [`starter/code/role_context.py`](starter/code/role_context.py) | Department → systems/training/manager lookup table |
@@ -84,12 +85,12 @@ A runnable **Python + FastAPI** service that implements the full onboarding orch
 | [`starter/code/audit_log.py`](starter/code/audit_log.py) | Append-only audit trail in SQLite |
 | [`starter/code/config.py`](starter/code/config.py) | Env-driven configuration |
 | [`starter/code/demo_runner.py`](starter/code/demo_runner.py) | Runnable end-to-end offline demo |
-| [`starter/code/tests/test_workflow.py`](starter/code/tests/test_workflow.py) | 15-test pytest suite (offline-mocked, deterministic) |
+| [`starter/code/tests/test_workflow.py`](starter/code/tests/test_workflow.py) | 27-test pytest suite (offline-mocked, deterministic) |
 | [`starter/code/requirements.txt`](starter/code/requirements.txt) | Pinned dependencies |
 | [`starter/diagrams/flow.md`](starter/diagrams/flow.md) | Mermaid workflow diagram |
 | [`starter/design-solution.md`](starter/design-solution.md) | Task 1 design document |
 | [`starter/prompts/prompts.md`](starter/prompts/prompts.md) | Prompt specifications + JSON schema |
-| [`starter/screenshots/pytest-output.txt`](starter/screenshots/pytest-output.txt) | Captured test evidence (15 passed) |
+| [`starter/screenshots/pytest-output.txt`](starter/screenshots/pytest-output.txt) | Captured test evidence (27 passed) |
 
 ### Flow of Data
 1. A new-hire record (`raw_text`) is POSTed to `/intake`.

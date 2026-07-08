@@ -88,6 +88,14 @@ class MockChatCompletions:
         mock_response.choices = [mock_choice]
         return mock_response
 
+    def create(self, **kwargs):
+        """Mock the ChatCompletions.create method used by the FAQ chatbot."""
+        mock_choice = MagicMock()
+        mock_choice.message.content = "You can work from home 3 days a week."
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
+        return mock_response
+
 
 class MockBetaChat:
     def __init__(self):
@@ -468,11 +476,12 @@ def test_document_upload_ocr_flag(client):
     assert "ID document uploaded and simulated OCR verified." in ocr_audit["details"]
 
 def test_faq_chatbot_response(client):
-    """Test the FAQ chatbot returns a string response."""
+    """Test the FAQ chatbot returns a string response and does not fallback to failure message."""
     r = client.post("/chat/faq", json={"question": "What is the WFH policy?"})
     assert r.status_code == 200
-    assert "answer" in r.json()
-    assert isinstance(r.json()["answer"], str)
+    answer = r.json()["answer"]
+    assert isinstance(answer, str)
+    assert "unable to answer" not in answer
 
 def test_stats_endpoint(client):
     """Test that the /stats endpoint returns correctly aggregated stats."""
@@ -503,16 +512,20 @@ def test_hris_webhook(client):
     r = client.post("/webhooks/hris", json=payload)
     assert r.status_code == 200
     assert r.json()["status"] in ["auto_approved", "pending_review"]
-    assert "Ayesha Raza" in r.text
+    assert "record_id" in r.json()
 
 def test_offboarding_endpoint(client):
-    """Test the automated de-provisioning offboarding endpoint."""
+    """Test the automated de-provisioning offboarding endpoint and its idempotency."""
     r1 = client.post("/intake", json={"raw_text": "Offboard Test Candidate"})
     record_id = r1.json()["record_id"]
     
     r2 = client.post(f"/offboard/{record_id}")
     assert r2.status_code == 200
     assert r2.json()["status"] == "offboarded"
+    
+    # Test idempotency (should return 409 Conflict)
+    r3 = client.post(f"/offboard/{record_id}")
+    assert r3.status_code == 409
     
     audit_response = client.get("/audit")
     offboard_entry = next((a for a in audit_response.json() if a["action"] == "offboarding_initiated" and a["record_id"] == record_id), None)

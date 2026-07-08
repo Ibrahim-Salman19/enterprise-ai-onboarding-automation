@@ -6,6 +6,7 @@ Uses python-dotenv to support .env files for local development.
 """
 
 import os
+import secrets
 from dotenv import load_dotenv
 
 # Load .env file if present (no-op in production where env vars are set directly)
@@ -33,7 +34,7 @@ RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
 
 # ── Security & Auth ─────────────────────────────────────────────────────────
 ADMIN_PIN: str = os.getenv("ADMIN_PIN", "1234")
-JWT_SECRET: str = os.getenv("JWT_SECRET", "super-secret-jwt-key-2026")
+JWT_SECRET: str = os.getenv("JWT_SECRET") or secrets.token_urlsafe(32)
 
 # ── Notifications & IT ──────────────────────────────────────────────────────
 IT_EMAIL: str = os.getenv("IT_EMAIL", "it@company.com")

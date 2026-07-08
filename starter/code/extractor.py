@@ -87,7 +87,7 @@ def extract_fields(raw_text: str, client: OpenAI = None) -> dict:
             # Reached if parsing somehow returned None or structured output failed
             raise ValueError("Structured output parsing returned None.")
 
-    except Exception as e:
+    except (APIError, APIConnectionError, RateLimitError, APITimeoutError, ValueError) as e:
         logger.exception(f"External LLM API call encountered an error: {e}")
         return {
             "name": "",
