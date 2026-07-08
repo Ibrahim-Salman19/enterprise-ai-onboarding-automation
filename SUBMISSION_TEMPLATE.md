@@ -15,7 +15,7 @@ The prototype ships with an **interactive HR Console web UI** (served at the roo
 
 All 15 integration tests pass and the demo has been verified against the live Groq API (not only mocked).
 
-**Live Demo URL:** [Link to Render URL to be provided by user]
+**Live Demo URL:** [Link to Koyeb URL to be provided by user]
 
 ---
 
@@ -86,7 +86,6 @@ A runnable **Python + FastAPI** service that implements the full onboarding orch
 | [`starter/code/demo_runner.py`](starter/code/demo_runner.py) | Runnable end-to-end offline demo |
 | [`starter/code/tests/test_workflow.py`](starter/code/tests/test_workflow.py) | 15-test pytest suite (offline-mocked, deterministic) |
 | [`starter/code/requirements.txt`](starter/code/requirements.txt) | Pinned dependencies |
-| [`render.yaml`](render.yaml) | Render deployment configuration |
 | [`starter/diagrams/flow.md`](starter/diagrams/flow.md) | Mermaid workflow diagram |
 | [`starter/design-solution.md`](starter/design-solution.md) | Task 1 design document |
 | [`starter/prompts/prompts.md`](starter/prompts/prompts.md) | Prompt specifications + JSON schema |
