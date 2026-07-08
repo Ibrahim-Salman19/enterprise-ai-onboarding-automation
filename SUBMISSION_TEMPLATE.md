@@ -15,6 +15,8 @@ The prototype ships with an **interactive HR Console web UI** (served at the roo
 
 All 15 integration tests pass and the demo has been verified against the live Groq API (not only mocked).
 
+**Live Demo URL:** [Link to Live URL to be provided by user]
+
 ---
 
 ## Task 1: AI-Powered Automation Design
