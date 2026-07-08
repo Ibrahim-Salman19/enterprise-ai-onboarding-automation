@@ -15,7 +15,7 @@ The prototype ships with an **interactive HR Console web UI** (served at the roo
 
 All 15 integration tests pass and the demo has been verified against the live Groq API (not only mocked).
 
-**Live Demo URL:** [Link to Live URL to be provided by user]
+**Live Demo URL:** [https://ec96296a-01c1-43de-99eb-9c2aa9b23297-00-9kytlhhmxwg3.pike.replit.dev](https://ec96296a-01c1-43de-99eb-9c2aa9b23297-00-9kytlhhmxwg3.pike.replit.dev)
 
 ---
 
