@@ -15,11 +15,11 @@ The goal of this assessment is to demonstrate practical thinking across workflow
 > | **Task 2 — Prototype** | [`starter/code/`](starter/code/) (FastAPI app + tests) |
 > | **Prompts** | [`starter/prompts/prompts.md`](starter/prompts/prompts.md) |
 > | **Workflow diagram** | [`starter/diagrams/flow.md`](starter/diagrams/flow.md) |
-> | **Test evidence** | [`starter/screenshots/pytest-output.txt`](starter/screenshots/pytest-output.txt) (10/10 passing) |
+> | **Test evidence** | [`starter/screenshots/pytest-output.txt`](starter/screenshots/pytest-output.txt) (29 passing) |
 >
 > **Run the demo:**
 > ```bash
-> cd starter/code && pip install -r requirements.txt && pytest -v      # offline tests (11 passing)
+> cd starter/code && pip install -r requirements.txt && pytest -v      # offline tests (29 passing)
 > uvicorn main:app --reload                                              # then open http://localhost:8000
 > ```
 >

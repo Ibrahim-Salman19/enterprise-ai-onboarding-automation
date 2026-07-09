@@ -13,7 +13,7 @@ The design describes a production architecture built on an orchestration layer (
 
 The prototype ships with an **interactive HR Console web UI** (served at the root URL) so the full workflow can be driven from a browser — no CLI required.
 
-All 15 integration tests pass and the demo has been verified against the live Groq API (not only mocked).
+All 29 integration tests pass and the demo has been verified against the live Groq API (not only mocked).
 
 **Live Demo URL:** [https://ec96296a-01c1-43de-99eb-9c2aa9b23297-00-9kytlhhmxwg3.pike.replit.dev](https://ec96296a-01c1-43de-99eb-9c2aa9b23297-00-9kytlhhmxwg3.pike.replit.dev)
 
@@ -85,12 +85,12 @@ A runnable **Python + FastAPI** service that implements the full onboarding orch
 | [`starter/code/audit_log.py`](starter/code/audit_log.py) | Append-only audit trail in SQLite |
 | [`starter/code/config.py`](starter/code/config.py) | Env-driven configuration |
 | [`starter/code/demo_runner.py`](starter/code/demo_runner.py) | Runnable end-to-end offline demo |
-| [`starter/code/tests/test_workflow.py`](starter/code/tests/test_workflow.py) | 27-test pytest suite (offline-mocked, deterministic) |
+| [`starter/code/tests/test_workflow.py`](starter/code/tests/test_workflow.py) | 29-test pytest suite (offline-mocked, deterministic) |
 | [`starter/code/requirements.txt`](starter/code/requirements.txt) | Pinned dependencies |
 | [`starter/diagrams/flow.md`](starter/diagrams/flow.md) | Mermaid workflow diagram |
 | [`starter/design-solution.md`](starter/design-solution.md) | Task 1 design document |
 | [`starter/prompts/prompts.md`](starter/prompts/prompts.md) | Prompt specifications + JSON schema |
-| [`starter/screenshots/pytest-output.txt`](starter/screenshots/pytest-output.txt) | Captured test evidence (27 passed) |
+| [`starter/screenshots/pytest-output.txt`](starter/screenshots/pytest-output.txt) | Captured test evidence (29 passed) |
 
 ### Flow of Data
 1. A new-hire record (`raw_text`) is POSTed to `/intake`.
@@ -133,7 +133,7 @@ uvicorn main:app --reload     # then open http://localhost:8000  ← HR Console 
 ### 3. Run the automated tests (fully offline, no API key needed)
 ```bash
 cd starter/code
-pytest -v                     # expects: 15 passed
+pytest -v                     # expects: 29 passed
 ```
 
 ### 4. Run the end-to-end demo (offline)

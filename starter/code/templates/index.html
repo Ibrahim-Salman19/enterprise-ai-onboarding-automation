@@ -218,6 +218,7 @@
     <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" id="stat-approved" style="color:var(--green)">0</div></div>
     <div class="stat-card"><div class="stat-label">Auto-Approved</div><div class="stat-value" id="stat-auto" style="color:var(--accent)">0</div></div>
     <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value" id="stat-rejected" style="color:var(--red)">0</div></div>
+    <div class="stat-card"><div class="stat-label">Offboarded</div><div class="stat-value" id="stat-offboarded" style="color:var(--muted)">0</div></div>
   </div>
 
   <main>
@@ -318,6 +319,9 @@
 var currentToken = localStorage.getItem("hr_admin_token");
 if (currentToken) {
   $("login-screen").style.display = "none";
+  $("stats-bar").style.display = "flex";
+  loadStats();
+  setInterval(loadStats, 60000);
 }
 
 function authFetch(url, options) {
@@ -361,7 +365,12 @@ function doLogin() {
     loadTab(activeTab());
     loadHealth();
     loadStats();
-    setInterval(loadStats, 60000);
+    setInterval(function() {
+      if (currentToken) {
+        loadStats();
+        silentReloadTab(activeTab());
+      }
+    }, 30000);
   }).catch(function(e){
     $("login-error").style.display = "block";
     $("login-error").textContent = e.message;
@@ -403,6 +412,7 @@ function loadStats() {
     $("stat-approved").textContent = d.approved || 0;
     $("stat-auto").textContent = d.auto_approved || 0;
     $("stat-rejected").textContent = d.rejected || 0;
+    $("stat-offboarded").textContent = d.offboarded || 0;
     
     // Update department filter options
     var depts = Object.keys(d.by_department || {}).sort();
@@ -420,8 +430,18 @@ function loadStats() {
 
 // ── Render helpers ──────────────────────────────────────────────
 function escapeHtml(s) {
-  return String(s == null ? "" : s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return String(s == null ? "" : s).replace(/[&<>"'`=\/]/g, function (char) {
+    return ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+      "/": "&#x2F;",
+      "`": "&#x60;",
+      "=": "&#x3D;"
+    })[char];
+  });
 }
 
 function statusBadge(s) {
@@ -471,6 +491,12 @@ for (var i = 0; i < tabButtons.length; i++) {
     ["pending", "records", "audit"].forEach(function (t) {
       elTab(t).style.display = (t === this.dataset.tab) ? "block" : "none";
     }, this);
+    
+    // Show/hide export button depending on the tab
+    if ($("export-btn")) {
+      $("export-btn").style.display = (this.dataset.tab === "audit") ? "inline-block" : "none";
+    }
+    
     var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?tab=" + this.dataset.tab;
     window.history.pushState({path:newUrl},'',newUrl);
     loadTab(this.dataset.tab);
@@ -503,6 +529,32 @@ function loadTab(t) {
         ? entries.slice().reverse().map(auditHtml).join("")
         : emptyHtml("No audit entries yet.");
     }).catch(function (e) { container.innerHTML = failHtml(e); });
+  }
+}
+
+function silentReloadTab(t) {
+  if (!currentToken) return;
+  
+  if (t === "pending") {
+    var container = $("tab-pending");
+    authFetch("/records").then(function (r) { return r.json(); }).then(function (recs) {
+      var pending = recs.filter(function (r) { return r.status === "pending_review"; });
+      container.innerHTML = pending.length
+        ? '<div class="list">' + pending.map(itemHtml).join("") + "</div>"
+        : emptyHtml("No records awaiting review. 🎉");
+    }).catch(console.error);
+  } else if (t === "records") {
+    authFetch("/records").then(function (r) { return r.json(); }).then(function (recs) {
+      window.allRecordsData = recs;
+      renderRecords();
+    }).catch(console.error);
+  } else {
+    var container = $("tab-audit");
+    authFetch("/audit").then(function (r) { return r.json(); }).then(function (entries) {
+      container.innerHTML = entries.length
+        ? entries.slice().reverse().map(auditHtml).join("")
+        : emptyHtml("No audit entries yet.");
+    }).catch(console.error);
   }
 }
 
@@ -539,8 +591,8 @@ function itemHtml(r) {
   var id = r.record_id;
   var actions = r.status === "pending_review"
     ? '<div class="actions">' +
-        '<button class="btn-approve" onclick="openDecisionModal(\'' + id + '\', \'approve\', \'' + escapeHtml(ex.name || "") + '\', \'' + escapeHtml(ex.role || "") + '\', ' + conf + ')">Approve</button>' +
-        '<button class="btn-reject" onclick="openDecisionModal(\'' + id + '\', \'reject\', \'' + escapeHtml(ex.name || "") + '\', \'' + escapeHtml(ex.role || "") + '\', ' + conf + ')">Reject</button>' +
+        '<button class="btn-approve" data-id="' + id + '" data-decision="approve" data-name="' + escapeHtml(ex.name || "") + '" data-role="' + escapeHtml(ex.role || "") + '" data-conf="' + (conf == null ? "" : conf) + '" onclick="handleDecisionClick(event, this)">Approve</button>' +
+        '<button class="btn-reject" data-id="' + id + '" data-decision="reject" data-name="' + escapeHtml(ex.name || "") + '" data-role="' + escapeHtml(ex.role || "") + '" data-conf="' + (conf == null ? "" : conf) + '" onclick="handleDecisionClick(event, this)">Reject</button>' +
       "</div>"
     : "";
   var roadmap = r.roadmap
@@ -573,15 +625,32 @@ function auditHtml(a) {
 var currentDecisionId = null;
 var currentDecisionType = null;
 
-window.openDecisionModal = function(id, decision, name, role, conf) {
-  event.stopPropagation();
+window.handleDecisionClick = function(ev, btn) {
+  if (ev) {
+    ev.stopPropagation();
+    ev.preventDefault();
+  }
+  var id = btn.getAttribute("data-id");
+  var decision = btn.getAttribute("data-decision");
+  var name = btn.getAttribute("data-name");
+  var role = btn.getAttribute("data-role");
+  var confVal = btn.getAttribute("data-conf");
+  var conf = confVal ? parseFloat(confVal) : null;
+  window.openDecisionModal(ev, id, decision, name, role, conf);
+};
+
+window.openDecisionModal = function(ev, id, decision, name, role, conf) {
+  if (ev) {
+    ev.stopPropagation();
+    ev.preventDefault();
+  }
   currentDecisionId = id;
   currentDecisionType = decision;
   
   $("decision-title").innerHTML = decision === "approve" ? "✅ Approve Onboarding Record" : "❌ Reject Onboarding Record";
   
   var confHtml = conf == null ? "—" : conf.toFixed(2);
-  $("decision-meta").innerHTML = "Candidate: <strong>" + name + "</strong><br>Role: " + role + "<br>AI Confidence: " + confHtml;
+  $("decision-meta").innerHTML = "Candidate: <strong>" + escapeHtml(name) + "</strong><br>Role: " + escapeHtml(role) + "<br>AI Confidence: " + confHtml;
   
   if (decision === "approve") {
     $("reject-reason-group").style.display = "none";

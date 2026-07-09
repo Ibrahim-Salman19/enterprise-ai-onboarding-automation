@@ -389,7 +389,7 @@
         });
         const data = await res.json();
         document.getElementById(loadId).remove();
-        msgs.innerHTML += `<div class="msg bot">${escapeHtml(data.answer)}</div>`;
+        msgs.innerHTML += `<div class="msg bot">${formatBotResponse(data.answer)}</div>`;
       } catch(e) {
         document.getElementById(loadId).remove();
         msgs.innerHTML += `<div class="msg bot text-red-400">Failed to connect to AI.</div>`;
@@ -401,6 +401,14 @@
       if(e.key === 'Enter') sendChatMessage();
     }
     
+    function formatBotResponse(text) {
+      var h = escapeHtml(text);
+      h = h.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      h = h.replace(/`([^`]+)`/g, "<code>$1</code>");
+      h = h.replace(/\n/g, "<br>");
+      return h;
+    }
+
     function escapeHtml(s) {
       return String(s||"").replace(/[&<>"'`=\/]/g, function (s) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "/": "&#x2F;", "`": "&#x60;", "=": "&#x3D;" })[s]; });
     }

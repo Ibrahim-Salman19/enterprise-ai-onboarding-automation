@@ -1,0 +1,11 @@
+# Ignored secret files
+.jwt_secret
+.env
+
+# Ignored database files
+onboarding.db
+
+# Ignored Python build / caches
+__pycache__/
+*.pyc
+.pytest_cache/

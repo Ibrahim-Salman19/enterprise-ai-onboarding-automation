@@ -1,3 +1,238 @@
 {
-  "_note": "The prototype demo for this submission is implemented in Python (FastAPI). See starter/code/ for the working scaffold. A production deployment would use n8n or similar orchestration platform as described in starter/design-solution.md."
+  "name": "Enterprise AI Onboarding Automation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hris-ingest",
+        "options": {}
+      },
+      "id": "e2a2c070-5b12-4f1e-9276-f40ea903912a",
+      "name": "HRIS Webhook Ingestion",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "operation": "create",
+        "model": "gpt-4o",
+        "messagesUi": {
+          "messageValues": [
+            {
+              "role": "system",
+              "message": "You are an expert HR operations data assistant. Extract details: name, email, role, department, manager, start_date. Evaluate confidence (0.00-1.00)."
+            },
+            {
+              "role": "user",
+              "message": "={{ $json.body.name }}, {{ $json.body.email }}, {{ $json.body.role }}, {{ $json.body.department }}, starts {{ $json.body.start_date }}"
+            }
+          ]
+        },
+        "jsonOutput": true
+      },
+      "id": "b3b3a01a-8c90-4a87-b91c-c76b6d80112c",
+      "name": "LLM Entity Extraction",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.confidence_score }}",
+              "operation": "largerEqual",
+              "value2": 0.8
+            }
+          ]
+        }
+      },
+      "id": "d1c1a23a-7b89-4e78-bc8c-a12b3c4d5e6f",
+      "name": "Is High Confidence?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api.onboarding.internal/records",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"auto_approved\",\n  \"extracted_data\": {\n    \"name\": \"{{ $json.name }}\",\n    \"email\": \"{{ $json.email }}\",\n    \"role\": \"{{ $json.role }}\",\n    \"department\": \"{{ $json.department }}\",\n    \"manager\": \"{{ $json.manager }}\",\n    \"start_date\": \"{{ $json.start_date }}\",\n    \"confidence_score\": {{ $json.confidence_score }}\n  }\n}"
+      },
+      "id": "a1a1b22b-3c4d-4e5f-b6f7-a8b9c0d1e2f3",
+      "name": "Persist Auto-Approved",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api.onboarding.internal/records",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"pending_review\",\n  \"extracted_data\": {\n    \"name\": \"{{ $json.name }}\",\n    \"email\": \"{{ $json.email }}\",\n    \"role\": \"{{ $json.role }}\",\n    \"department\": \"{{ $json.department }}\",\n    \"manager\": \"{{ $json.manager }}\",\n    \"start_date\": \"{{ $json.start_date }}\",\n    \"confidence_score\": {{ $json.confidence_score }}\n  }\n}"
+      },
+      "id": "f5f5c44c-2b1a-4d3e-9f8e-7d6c5b4a3a2f",
+      "name": "Queue for Manual Review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "=#it-provisioning",
+        "text": "=🔧 *IT PROVISIONING REQUEST*\nNew Hire: {{ $node[\"LLM Entity Extraction\"].json[\"name\"] }}\nRole: {{ $node[\"LLM Entity Extraction\"].json[\"role\"] }}\nStart Date: {{ $node[\"LLM Entity Extraction\"].json[\"start_date\"] }}\nSystems to provision: Email, Slack, GitHub, Jira."
+      },
+      "id": "c9c9d0d0-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
+      "name": "Slack IT Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 3,
+      "position": [
+        1050,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "={{ $node[\"LLM Entity Extraction\"].json[\"manager\"] }}",
+        "text": "=👋 Hi! {{ $node[\"LLM Entity Extraction\"].json[\"name\"] }} joins your team on {{ $node[\"LLM Entity Extraction\"].json[\"start_date\"] }}.\nPlease complete their pre-boarding checklist and schedule a Day 1 welcome 1:1."
+      },
+      "id": "d9d9e0e0-2b3c-4d5e-6f7a-8b9c0d1e2f3a",
+      "name": "Slack Manager DM",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 3,
+      "position": [
+        1050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "onboarding@company.com",
+        "toEmail": "={{ $node[\"LLM Entity Extraction\"].json[\"email\"] }}",
+        "subject": "=Welcome to the team, {{ $node[\"LLM Entity Extraction\"].json[\"name\"] }}! 🎉",
+        "html": "=<h2>Welcome to the team!</h2><p>We are thrilled to welcome you. Your manager will follow up with your 30/60/90 onboarding roadmap soon.</p>"
+      },
+      "id": "e9e9f0f0-3c4d-5e6f-7a8b-9c0d1e2f3a4b",
+      "name": "Send Candidate Welcome Email",
+      "type": "n8n-nodes-base.resend",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "=#hr-alerts",
+        "text": "=⚠️ *MANUAL REVIEW REQUIRED*\nCandidate: {{ $node[\"LLM Entity Extraction\"].json[\"name\"] }} (Confidence: {{ $node[\"LLM Entity Extraction\"].json[\"confidence_score\"] }})\nPlease open the HR console to verify details."
+      },
+      "id": "f9f9a0a0-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+      "name": "Slack HR Queue Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 3,
+      "position": [
+        1050,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "HRIS Webhook Ingestion": {
+      "main": [
+        [
+          {
+            "node": "LLM Entity Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Entity Extraction": {
+      "main": [
+        [
+          {
+            "node": "Is High Confidence?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is High Confidence?": {
+      "main": [
+        [
+          {
+            "node": "Persist Auto-Approved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Queue for Manual Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persist Auto-Approved": {
+      "main": [
+        [
+          {
+            "node": "Slack IT Notification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack Manager DM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Candidate Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queue for Manual Review": {
+      "main": [
+        [
+          {
+            "node": "Slack HR Queue Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "f789d2c2-849c-4ad8-8250-13a890d23588"
 }

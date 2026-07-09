@@ -51,7 +51,7 @@ graph TD
     K --> L[Synthesize Roadmap<br/>AI LangChain Chain]:::ai
     L --> M[Update Core Record<br/>Airtable Update]:::ext
     M --> N[Post Onboarding Status<br/>Slack Message]:::ext
-    M --> O[Send Welcome Packet<br/>Gmail SMTP]:::ext
+    M --> O[Send Welcome Packet<br/>Gmail SMTP / Resend]:::ext
     M --> P[Set Welcome Syncs<br/>Google Calendar]:::ext
 
     %% Error handler
@@ -63,14 +63,14 @@ graph TD
 *   **System Action:** A new hire submits their intake forms and scans of identification documents (e.g., passport, signed contract). The HRIS or intake portal triggers a `POST` request to n8n's webhook endpoint (`onboarding/intake`).
 *   **Data Handling:** The payload contains candidate metadata and binary references or URL endpoints to retrieve the uploaded files.
 
-#### Step 2: AI-Based Extraction (`AI Document Extractor` & `Model - GPT-4o`)
-*   **System Action:** The document parser processes the incoming document stream. The LangChain chain passes raw text strings (extracted from PDF/images via OCR) or visual document tokens directly to the LLM (GPT-4o or Gemini Flash) with temperature set to `0.0` for maximum extraction determinism.
+#### Step 2: AI-Based Extraction (`AI Document Extractor` & `Model - GPT-4o / Groq`)
+*   **System Action:** The document parser processes the incoming document stream. The LangChain chain passes raw text strings (extracted from PDF/images via OCR) or visual document tokens directly to the LLM (GPT-4o, Gemini Flash, or Groq) with temperature set to `0.0` for maximum extraction determinism.
 *   **Outputs:** Extracts full name, personal email, job title, department, office location, manager name, start date, and missing documentation.
 
 #### Step 3: Verification & Sanitization (`Sanitize & Verify`)
 *   **System Action:** A JavaScript Code Node checks the output of the extraction parser.
 *   **Validation Rules:**
-    1.  **Confidence Score:** Flags records if the model's self-assessed extraction confidence is $< 0.85$.
+    1.  **Confidence Score:** Flags records if the model's self-assessed extraction confidence is $< 0.80$.
     2.  **Structural Validation:** Validates email strings against a standard regex (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) and checks that the name length is $\ge 2$ characters.
     3.  **Schema Compliance:** Inspects LangChain's output parser for validation flags or schema errors.
 *   **Routing Result:** Appends a boolean flag `route_manual` indicating whether the execution requires manual review.
@@ -87,10 +87,10 @@ graph TD
 *   **System Action:** The system merges the sanitized intake data with the retrieved corporate directory profile using a left join (`n8n-nodes-base.merge`).
 *   **Personalization Engine:** An AI Chain takes the enriched employee profile and constructs a customized 30/60/90-day onboarding plan matching their job role, experience level, and department goals.
 
-#### Step 6: Multi-Channel Provisioning & Communication (`Airtable`, `Slack`, `Gmail`, `Google Calendar`)
+#### Step 6: Multi-Channel Provisioning & Communication (`Airtable / SQLite`, `Slack`, `Gmail / Resend`, `Google Calendar`)
 *   **Record Update:** Syncs the finalized onboarding plan back to the employee's database record, marking their status as "Active".
 *   **System Provisioning:**
-    *   Fires email invitations containing welcome packets via Gmail.
+    *   Fires email invitations containing welcome packets via Gmail / Resend.
     *   Creates calendar invite events for standard team syncs and orientation.
     *   Publishes status updates to Slack onboarding channels.
 
@@ -109,7 +109,7 @@ AI is utilized selectively in this architecture where traditional rule-based pro
 
 | Operational Segment | AI Implementation Pattern | Architectural Advantages | Failure Mitigation & Guardrails |
 | :--- | :--- | :--- | :--- |
-| **Document Processing & OCR** | Multimodal Visual LLM Ingestion (Gemini 2.5 Flash / GPT-4o) | Successfully extracts structured key-value data from crumpled, rotated, or low-resolution smartphone photographs of IDs and forms. Bypasses the need to maintain rigid spatial templates for every potential form layout. | Visual hallucination risk is mitigated by using a deterministic output schema (JSON Schema) and forwarding any validation anomalies or low-confidence extractions ($< 85\%$) to Slack for manual verification. |
+| **Document Processing & OCR** | Multimodal Visual LLM Ingestion (Gemini 2.5 Flash / GPT-4o / Groq) | Successfully extracts structured key-value data from crumpled, rotated, or low-resolution smartphone photographs of IDs and forms. Bypasses the need to maintain rigid spatial templates for every potential form layout. | Visual hallucination risk is mitigated by using a deterministic output schema (JSON Schema) and forwarding any validation anomalies or low-confidence extractions ($< 80\%$) to Slack for manual verification. |
 | **Input Normalization & Extraction** | Pydantic Structured Outputs | Eliminates prompt-and-pray fragility by forcing the LLM to output valid JSON matching an explicit schema (e.g., `ExtractedEmployee`). | Type validation enforces field presence; any unparseable output falls back to manual review. |
 | **Confidence Anchoring** | Self-Assessed Scoring via Schema | The schema demands a `confidence_score` float (0.0-1.0). The model evaluates its own extraction quality. | Any score $< 0.80$ automatically triggers the Human-In-The-Loop (HITL) review flow. |
 | **Personalization Engine** | Contextual Prompt Completion | Synthesizes role-specific 30/60/90-day onboarding roadmaps by cross-referencing candidate background (resume/interview notes) with the target department's core tech stack and objectives. | Generates output in markdown structure restricted by formatting instructions. System templates and cached instructions ensure consistency and control output lengths. |
@@ -146,7 +146,7 @@ Analyze the document carefully. Extract and return the following fields in a fla
 
 Constraints:
 1. Do not include any pre- or post-markdown blocks (such as ```json). Return ONLY raw JSON.
-2. If the document is corrupted, illegible, or contains contradicting data, set the confidence_score to a value below 0.70.
+2. If the document is corrupted, illegible, or contains contradicting data, set the confidence_score to a value below 0.80.
 3. If any field is missing, represent it as an empty string "" and append the field name to the missing_fields array.
 
 Input Document text/image:

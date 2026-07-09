@@ -35,6 +35,8 @@ RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
 
 # ── Security & Auth ─────────────────────────────────────────────────────────
 ADMIN_PIN: str = os.getenv("ADMIN_PIN", "1234")
+WEBHOOK_SECRET: str = os.getenv("WEBHOOK_SECRET", "")
+
 
 _jwt_env = os.getenv("JWT_SECRET")
 if _jwt_env:

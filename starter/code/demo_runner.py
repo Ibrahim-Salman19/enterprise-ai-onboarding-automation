@@ -106,14 +106,9 @@ def override_dependency():
 
 app.dependency_overrides[get_llm_client_dependency] = override_dependency
 app.dependency_overrides[auth.get_current_admin] = lambda: "mock_admin_token"
-client = TestClient(app)
-
-# Reset stores
-review_store.clear_store()
-audit_log.clear_audit_log()
 
 
-def run_demo():
+def run_demo(client):
     print("=" * 80)
     print("                 AI ONBOARDING AUTOMATION API DEMO WORKFLOW")
     print("=" * 80)
@@ -193,4 +188,8 @@ def run_demo():
 
 
 if __name__ == "__main__":
-    run_demo()
+    with TestClient(app) as client:
+        # Reset stores after tables are initialized by lifespan
+        review_store.clear_store()
+        audit_log.clear_audit_log()
+        run_demo(client)

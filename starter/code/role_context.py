@@ -105,6 +105,53 @@ _ROLE_CONTEXTS: dict[str, dict[str, Any]] = {
         "default_buddy_pool": ["Taylor HR", "Jordan Ops"],
         "hardware_provisioning": "ThinkPad T14 Gen 4"
     },
+    "Sales": {
+        "manager_name": "Marcus Vance",
+        "team_size": 15,
+        "required_systems": [
+            "Salesforce",
+            "LinkedIn Sales Navigator",
+            "Gong.io",
+            "Slack Sales Channels",
+            "ZoomInfo",
+        ],
+        "training_modules": [
+            "Sales Playbook & Pitching",
+            "Product Demonstration Training",
+            "CRM Best Practices",
+            "Negotiation Techniques",
+        ],
+        "buddy_program": True,
+        "manager_slack_handle": "@marcus.v",
+        "it_channel": "#it-provisioning",
+        "announcements_channel": "#new-joiners",
+        "manager_email": "marcus.vance@company.com",
+        "default_buddy_pool": ["Taylor Closer", "Jordan Seller"],
+        "hardware_provisioning": "ThinkPad T14 Gen 4"
+    },
+    "Legal": {
+        "manager_name": "Elena Rostova",
+        "team_size": 4,
+        "required_systems": [
+            "DocuSign",
+            "Ironclad CLM",
+            "LexisNexis",
+            "Slack Legal Channels",
+        ],
+        "training_modules": [
+            "Contract Guidelines & Templates",
+            "Corporate Governance Overview",
+            "Intellectual Property Policy",
+            "Data Privacy & GDPR Basics",
+        ],
+        "buddy_program": False,
+        "manager_slack_handle": "@elena.r",
+        "it_channel": "#it-provisioning",
+        "announcements_channel": "#new-joiners",
+        "manager_email": "elena.rostova@company.com",
+        "default_buddy_pool": [],
+        "hardware_provisioning": "MacBook Air M3 16GB"
+    },
 }
 
 # Sensible fallback for departments not in the lookup table
@@ -131,6 +178,21 @@ _DEFAULT_CONTEXT: dict[str, Any] = {
 }
 
 
+# Department alias mapping to normalize common synonyms/abbreviations to official keys
+_DEPARTMENT_ALIASES: dict[str, str] = {
+    "Hr": "Human Resources",
+    "Hris": "Human Resources",
+    "Humanresource": "Human Resources",
+    "Humanresources": "Human Resources",
+    "Eng": "Engineering",
+    "Software Engineering": "Engineering",
+    "Dev": "Engineering",
+    "Development": "Engineering",
+    "Mktg": "Marketing",
+    "Fin": "Finance",
+}
+
+
 def get_role_context(department: str, job_title: str | None = None) -> dict[str, Any]:
     """
     Return department-specific onboarding context.
@@ -143,8 +205,19 @@ def get_role_context(department: str, job_title: str | None = None) -> dict[str,
         Dict with keys: ``manager_name``, ``team_size``, ``required_systems``,
         ``training_modules``, ``buddy_program``.
     """
+    # Safe type check and conversion to string
+    if not isinstance(department, str):
+        dept_str = str(department) if department is not None else ""
+    else:
+        dept_str = department
+
     # Normalise the department name for a case-insensitive, whitespace-tolerant match
-    normalised = department.strip().title() if department else ""
+    normalised = dept_str.strip().title() if dept_str else ""
+    
+    # Resolve aliases to standard department names
+    if normalised in _DEPARTMENT_ALIASES:
+        normalised = _DEPARTMENT_ALIASES[normalised]
+
     context = _ROLE_CONTEXTS.get(normalised, _DEFAULT_CONTEXT).copy()
     context["department"] = normalised or "Unknown"
     context["job_title"] = job_title or "Not Specified"

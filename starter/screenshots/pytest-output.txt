@@ -3,35 +3,37 @@ platform linux -- Python 3.10.12, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /mnt/c/Users/hafiz/Task1_interview/enterprise-ai-onboarding-automation/starter/code
 plugins: anyio-4.14.0
-collecting ... collected 27 items
+collecting ... collecting 0 items                                                             collecting 0 items                                                             collected 29 items                                                             
 
 tests/test_workflow.py::test_health_check PASSED                         [  3%]
-tests/test_workflow.py::test_security_headers_present PASSED             [  7%]
-tests/test_workflow.py::test_login_valid_pin_returns_token PASSED        [ 11%]
-tests/test_workflow.py::test_login_invalid_pin_returns_401 PASSED        [ 14%]
-tests/test_workflow.py::test_admin_routes_require_auth_token PASSED      [ 18%]
-tests/test_workflow.py::test_home_serves_ui PASSED                       [ 22%]
-tests/test_workflow.py::test_onboarding_portal_serves_employee_form PASSED [ 25%]
-tests/test_workflow.py::test_intake_high_confidence PASSED               [ 29%]
-tests/test_workflow.py::test_intake_low_confidence PASSED                [ 33%]
-tests/test_workflow.py::test_intake_empty_input PASSED                   [ 37%]
-tests/test_workflow.py::test_intake_whitespace_only PASSED               [ 40%]
-tests/test_workflow.py::test_approve_flow PASSED                         [ 44%]
-tests/test_workflow.py::test_reject_flow PASSED                          [ 48%]
-tests/test_workflow.py::test_approve_not_found PASSED                    [ 51%]
-tests/test_workflow.py::test_approve_conflict_state PASSED               [ 55%]
-tests/test_workflow.py::test_list_records PASSED                         [ 59%]
-tests/test_workflow.py::test_intake_injection_defense PASSED             [ 62%]
-tests/test_workflow.py::test_persistence_record_survives PASSED          [ 66%]
-tests/test_workflow.py::test_notifications_fallback_does_not_crash PASSED [ 70%]
-tests/test_workflow.py::test_audit_trail_order_and_flags PASSED          [ 74%]
-tests/test_workflow.py::test_csv_export_endpoint PASSED                  [ 77%]
-tests/test_workflow.py::test_document_upload_ocr_flag PASSED             [ 81%]
-tests/test_workflow.py::test_faq_chatbot_response PASSED                 [ 85%]
-tests/test_workflow.py::test_stats_endpoint PASSED                       [ 88%]
-tests/test_workflow.py::test_confirmation_email_sent PASSED              [ 92%]
-tests/test_workflow.py::test_hris_webhook PASSED                         [ 96%]
-tests/test_workflow.py::test_offboarding_endpoint PASSED                 [100%]
+tests/test_workflow.py::test_security_headers_present PASSED             [  6%]
+tests/test_workflow.py::test_login_valid_pin_returns_token PASSED        [ 10%]
+tests/test_workflow.py::test_login_invalid_pin_returns_401 PASSED        [ 13%]
+tests/test_workflow.py::test_admin_routes_require_auth_token PASSED      [ 17%]
+tests/test_workflow.py::test_home_serves_ui PASSED                       [ 20%]
+tests/test_workflow.py::test_onboarding_portal_serves_employee_form PASSED [ 24%]
+tests/test_workflow.py::test_intake_high_confidence PASSED               [ 27%]
+tests/test_workflow.py::test_intake_low_confidence PASSED                [ 31%]
+tests/test_workflow.py::test_intake_empty_input PASSED                   [ 34%]
+tests/test_workflow.py::test_intake_whitespace_only PASSED               [ 37%]
+tests/test_workflow.py::test_approve_flow PASSED                         [ 41%]
+tests/test_workflow.py::test_reject_flow PASSED                          [ 44%]
+tests/test_workflow.py::test_approve_not_found PASSED                    [ 48%]
+tests/test_workflow.py::test_approve_conflict_state PASSED               [ 51%]
+tests/test_workflow.py::test_list_records PASSED                         [ 55%]
+tests/test_workflow.py::test_intake_injection_defense PASSED             [ 58%]
+tests/test_workflow.py::test_persistence_record_survives PASSED          [ 62%]
+tests/test_workflow.py::test_notifications_fallback_does_not_crash PASSED [ 65%]
+tests/test_workflow.py::test_audit_trail_order_and_flags PASSED          [ 68%]
+tests/test_workflow.py::test_csv_export_endpoint PASSED                  [ 72%]
+tests/test_workflow.py::test_document_upload_ocr_flag PASSED             [ 75%]
+tests/test_workflow.py::test_faq_chatbot_response PASSED                 [ 79%]
+tests/test_workflow.py::test_stats_endpoint PASSED                       [ 82%]
+tests/test_workflow.py::test_confirmation_email_sent PASSED              [ 86%]
+tests/test_workflow.py::test_hris_webhook PASSED                         [ 89%]
+tests/test_workflow.py::test_offboarding_endpoint PASSED                 [ 93%]
+tests/test_workflow.py::test_login_rate_limiting PASSED                  [ 96%]
+tests/test_workflow.py::test_webhook_verification PASSED                 [100%]
 
 =============================== warnings summary ===============================
 ../../../../../../../../usr/local/lib/python3.10/dist-packages/fastapi/testclient.py:1
@@ -39,4 +41,4 @@ tests/test_workflow.py::test_offboarding_endpoint PASSED                 [100%]
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-======================== 27 passed, 1 warning in 6.11s =========================
+======================== 29 passed, 1 warning in 25.50s ========================

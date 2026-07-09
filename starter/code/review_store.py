@@ -6,8 +6,11 @@ onboarding profiles.
 """
 
 import json
+import threading
 from typing import Optional
 from database import SessionLocal, OnboardingRecord, engine, Base
+
+write_lock = threading.Lock()
 
 def _to_dict(record: OnboardingRecord) -> dict:
     if not record:
@@ -34,7 +37,11 @@ def save_record(record_id: str, record_data: dict) -> None:
         record = db.query(OnboardingRecord).filter(OnboardingRecord.id == record_id).first()
         if not record:
             record = OnboardingRecord(id=record_id)
+            record.created_at = record_data.get("created_at")
             db.add(record)
+        else:
+            if not record.created_at and record_data.get("created_at"):
+                record.created_at = record_data.get("created_at")
         
         record.status = record_data.get("status")
         record.extracted_data = json.dumps(record_data.get("extracted_data", {}))
@@ -43,7 +50,6 @@ def save_record(record_id: str, record_data: dict) -> None:
         record.notifications_sent = json.dumps(record_data.get("notifications_sent", {}))
         record.reviewer_name = record_data.get("reviewer_name")
         record.reviewer_notes = record_data.get("reviewer_notes")
-        record.created_at = record_data.get("created_at")
         record.updated_at = record_data.get("updated_at")
         
         db.commit()
@@ -107,6 +113,7 @@ def get_stats() -> dict:
         "approved": 0,
         "rejected": 0,
         "auto_approved": 0,
+        "offboarded": 0,
         "by_department": {}
     }
     

@@ -21,13 +21,21 @@ STAGING_EMAIL = "staging-test@company.com"
 STAGING_SLACK_CHANNEL = "#staging-alerts"
 
 def _candidate_name(record_data: dict) -> str:
+    if not record_data:
+        return "Unknown"
     if "extracted_data" in record_data:
-        record_data = record_data["extracted_data"]
+        record_data = record_data["extracted_data"] or {}
+    if not isinstance(record_data, dict):
+        return "Unknown"
     return (record_data.get("name") or record_data.get("full_name") or "Unknown").strip() or "Unknown"
 
 def _candidate_email(record_data: dict) -> str:
+    if not record_data:
+        return "unknown@example.com"
     if "extracted_data" in record_data:
-        record_data = record_data["extracted_data"]
+        record_data = record_data["extracted_data"] or {}
+    if not isinstance(record_data, dict):
+        return "unknown@example.com"
     return (
         record_data.get("email")
         or record_data.get("personal_email")
@@ -36,29 +44,78 @@ def _candidate_email(record_data: dict) -> str:
     ).strip() or "unknown@example.com"
 
 def _candidate_role(record_data: dict) -> str:
+    if not record_data:
+        return "New Hire"
     if "extracted_data" in record_data:
-        record_data = record_data["extracted_data"]
-    return record_data.get("role", "New Hire")
+        record_data = record_data["extracted_data"] or {}
+    if not isinstance(record_data, dict):
+        return "New Hire"
+    return (record_data.get("role") or "New Hire").strip() or "New Hire"
 
 def _candidate_dept(record_data: dict) -> str:
+    if not record_data:
+        return "their team"
     if "extracted_data" in record_data:
-        record_data = record_data["extracted_data"]
-    return record_data.get("department", "their team")
+        record_data = record_data["extracted_data"] or {}
+    if not isinstance(record_data, dict):
+        return "their team"
+    return (record_data.get("department") or "their team").strip() or "their team"
 
 def _candidate_start_date(record_data: dict) -> str:
+    if not record_data:
+        return "TBD"
     if "extracted_data" in record_data:
-        record_data = record_data["extracted_data"]
-    return record_data.get("start_date", "TBD")
+        record_data = record_data["extracted_data"] or {}
+    if not isinstance(record_data, dict):
+        return "TBD"
+    return (record_data.get("start_date") or "TBD").strip() or "TBD"
 
 def _candidate_conf(record_data: dict) -> float:
+    if not record_data:
+        return 0.0
     if "extracted_data" in record_data:
-        record_data = record_data["extracted_data"]
-    return record_data.get("confidence_score", 0.0)
+        record_data = record_data["extracted_data"] or {}
+    if not isinstance(record_data, dict):
+        return 0.0
+    val = record_data.get("confidence_score")
+    try:
+        return float(val) if val is not None else 0.0
+    except (TypeError, ValueError):
+        return 0.0
 
-def _send_slack_block_kit(blocks: list, fallback_text: str, channel: str = "") -> str:
+import json
+
+def _redact_pii_for_staging(text: str, record: dict) -> str:
+    if not STAGING_MODE or not record:
+        return text
+    name = _candidate_name(record)
+    email = _candidate_email(record)
+    
+    if name and name not in ("Unknown candidate", "New Hire", "Unknown"):
+        text = text.replace(name, "[REDACTED NAME]")
+    if email and email != "unknown@example.com":
+        text = text.replace(email, "[REDACTED EMAIL]")
+        
+    text = re.sub(r"[\w\.-]+@[\w\.-]+\.\w+", "[REDACTED EMAIL]", text)
+    return text
+
+def _redact_pii_blocks(blocks: list, record: dict) -> list:
+    if not STAGING_MODE or not record:
+        return blocks
+    try:
+        blocks_str = json.dumps(blocks)
+        redacted_str = _redact_pii_for_staging(blocks_str, record)
+        return json.loads(redacted_str)
+    except Exception:
+        return blocks
+
+def _send_slack_block_kit(blocks: list, fallback_text: str, channel: str = "", record: dict = None) -> str:
     if STAGING_MODE:
         channel = STAGING_SLACK_CHANNEL
         fallback_text = f"[STAGING] {fallback_text}"
+        if record:
+            fallback_text = _redact_pii_for_staging(fallback_text, record)
+            blocks = _redact_pii_blocks(blocks, record)
         
     if SLACK_WEBHOOK_URL:
         try:
@@ -71,7 +128,9 @@ def _send_slack_block_kit(blocks: list, fallback_text: str, channel: str = "") -
             logger.info(message)
             return message
         except Exception as e:
-            logger.error(f"Failed to send Slack notification: {e}")
+            err_msg = f"[ERROR] Failed to send Slack notification: {e}"
+            logger.error(err_msg, exc_info=True)
+            return err_msg
             
     message = f"[MOCK SLACK] {fallback_text}"
     logger.info(message)
@@ -85,20 +144,32 @@ def _send_resend_email(to_email: str, subject: str, html: str) -> str:
         subject = f"[STAGING] {subject}"
 
     if RESEND_API_KEY and to_email and to_email != "unknown@example.com":
-        resend.api_key = RESEND_API_KEY
         try:
-            params = {
+            headers = {
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
                 "from": FROM_EMAIL,
                 "to": [to_email],
                 "subject": subject,
                 "html": html
             }
-            email_response = resend.Emails.send(params)
-            message = f"Email sent to {to_email} via Resend (ID: {email_response.get('id', 'unknown')})"
+            response = requests.post(
+                "https://api.resend.com/emails",
+                json=payload,
+                headers=headers,
+                timeout=10
+            )
+            response.raise_for_status()
+            res_data = response.json()
+            message = f"Email sent to {to_email} via Resend (ID: {res_data.get('id', 'unknown')})"
             logger.info(message)
             return message
         except Exception as e:
-            logger.error(f"Failed to send email via Resend: {e}")
+            err_msg = f"[ERROR] Failed to send email via Resend: {e}"
+            logger.error(err_msg, exc_info=True)
+            return err_msg
             
     message = f"[MOCK EMAIL] To: {to_email} | Subj: {subject}"
     logger.info(message)
@@ -159,7 +230,7 @@ def send_hr_intake_card(record: dict) -> str:
     dept = _candidate_dept(record)
     start_date = _candidate_start_date(record)
     conf = _candidate_conf(record)
-    status = record.get("status", "unknown")
+    status = (record or {}).get("status") or "unknown"
     
     blocks = [
         {
@@ -171,20 +242,20 @@ def send_hr_intake_card(record: dict) -> str:
             "text": {"type": "mrkdwn", "text": f"*👤 {name}*\n💼 {role} · {dept}\n📅 Start Date: {start_date}\n🤖 AI Confidence: {conf:.2f}\n✅ Status: {status.upper()}"}
         }
     ]
-    return _send_slack_block_kit(blocks, f"New Intake: {name} ({status})")
+    return _send_slack_block_kit(blocks, f"New Intake: {name} ({status})", record=record)
 
 def send_manager_dm(record: dict) -> str:
     name = _candidate_name(record)
     role = _candidate_role(record)
     start_date = _candidate_start_date(record)
-    ctx = record.get("role_context", {})
-    manager_handle = ctx.get("manager_slack_handle", "@manager")
-    systems = ", ".join(ctx.get("required_systems", []))
+    ctx = (record or {}).get("role_context") or {}
+    manager_handle = ctx.get("manager_slack_handle") or "@manager"
+    systems = ", ".join(ctx.get("required_systems") or [])
     
     text = f"Hi {manager_handle}! 👋\n\n{name} has been approved and joins as {role} on {start_date}.\n\n📋 YOUR PRE-BOARDING CHECKLIST:\n☐ Submit laptop/equipment request via IT portal\n☐ Add to team Slack channels\n☐ Schedule Day 1 welcome 1:1\n☐ Assign an onboarding buddy\n☐ Send the team wiki\n\n🔧 Systems to provision: {systems}\n\n📄 Full 30/60/90-day roadmap generated in HR Console."
     
     blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": text}}]
-    return _send_slack_block_kit(blocks, f"Action Required for new hire {name}", channel=manager_handle)
+    return _send_slack_block_kit(blocks, f"Action Required for new hire {name}", channel=manager_handle, record=record)
 
 def send_it_provisioning_request(record: dict) -> str:
     name = _candidate_name(record)
@@ -192,27 +263,27 @@ def send_it_provisioning_request(record: dict) -> str:
     dept = _candidate_dept(record)
     start_date = _candidate_start_date(record)
     email = _candidate_email(record)
-    ctx = record.get("role_context", {})
-    it_channel = ctx.get("it_channel", "#it-provisioning")
-    hardware = ctx.get("hardware_provisioning", "Standard Laptop Provisioning")
-    systems = "\n".join([f"• {s}" for s in ctx.get("required_systems", [])])
+    ctx = (record or {}).get("role_context") or {}
+    it_channel = ctx.get("it_channel") or "#it-provisioning"
+    hardware = ctx.get("hardware_provisioning") or "Standard Laptop Provisioning"
+    systems = "\n".join([f"• {s}" for s in (ctx.get("required_systems") or [])])
     
     text = f"*🔧 IT PROVISIONING REQUEST*\nNew Hire: {name}\nRole: {role} | Dept: {dept}\nStart Date: {start_date}\n\n*💻 HARDWARE:*\n• {hardware}\n\n*📦 SYSTEMS TO PROVISION:*\n{systems}\n\n📧 New hire email: {email}"
     blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": text}}]
-    return _send_slack_block_kit(blocks, f"IT Provisioning: {name}", channel=it_channel)
+    return _send_slack_block_kit(blocks, f"IT Provisioning: {name}", channel=it_channel, record=record)
 
 def send_new_joiners_announcement(record: dict) -> str:
     name = _candidate_name(record)
     role = _candidate_role(record)
     dept = _candidate_dept(record)
     start_date = _candidate_start_date(record)
-    ctx = record.get("role_context", {})
-    channel = ctx.get("announcements_channel", "#new-joiners")
-    manager = ctx.get("manager_name", "their manager")
+    ctx = (record or {}).get("role_context") or {}
+    channel = ctx.get("announcements_channel") or "#new-joiners"
+    manager = ctx.get("manager_name") or "their manager"
     
     text = f"👋 Please welcome {name} to the team!\n\n{name} joins {dept} as {role}, reporting to {manager}. They start {start_date}.\n\nSay hello and give a warm welcome! 🎉"
     blocks = [{"type": "section", "text": {"type": "mrkdwn", "text": text}}]
-    return _send_slack_block_kit(blocks, f"Welcome {name}!", channel=channel)
+    return _send_slack_block_kit(blocks, f"Welcome {name}!", channel=channel, record=record)
 
 # --- Email Messages ---
 
@@ -227,7 +298,7 @@ def send_confirmation_email(record: dict) -> str:
 def send_welcome_email(record: dict) -> str:
     name = _candidate_name(record)
     email = _candidate_email(record)
-    roadmap = record.get("roadmap", "")
+    roadmap = (record or {}).get("roadmap", "")
     roadmap_html = md_to_html(roadmap) if roadmap else "<p>Your roadmap is pending.</p>"
     
     escaped_name = html.escape(name)
@@ -238,9 +309,9 @@ def send_manager_email(record: dict) -> str:
     name = _candidate_name(record)
     role = _candidate_role(record)
     start_date = _candidate_start_date(record)
-    ctx = record.get("role_context", {})
-    manager_email = ctx.get("manager_email", HR_EMAIL)
-    buddies = ", ".join(ctx.get("default_buddy_pool", []))
+    ctx = (record or {}).get("role_context") or {}
+    manager_email = ctx.get("manager_email") or HR_EMAIL
+    buddies = ", ".join(ctx.get("default_buddy_pool") or [])
     
     escaped_name = html.escape(name)
     escaped_role = html.escape(role)
@@ -252,8 +323,8 @@ def send_it_email(record: dict) -> str:
     name = _candidate_name(record)
     role = _candidate_role(record)
     start_date = _candidate_start_date(record)
-    ctx = record.get("role_context", {})
-    systems = "</li><li>".join(ctx.get("required_systems", []))
+    ctx = (record or {}).get("role_context") or {}
+    systems = "</li><li>".join(ctx.get("required_systems") or [])
     
     escaped_name = html.escape(name)
     escaped_role = html.escape(role)
@@ -272,7 +343,9 @@ def send_offboarding_alert(record: dict) -> str:
             }
         }
     ]
-    return _send_slack_block_kit(blocks, "Offboarding Triggered", channel="#it-provisioning")
+    return _send_slack_block_kit(blocks, "Offboarding Triggered", channel="#it-provisioning", record=record)
+
+import concurrent.futures
 
 def send_all_notifications(record: dict, stage: str = "intake") -> dict:
     """
@@ -280,21 +353,51 @@ def send_all_notifications(record: dict, stage: str = "intake") -> dict:
     stage: 'intake' or 'approved'
     """
     sent = {}
+    
+    tasks = []
     if stage == "intake":
-        sent["slack_hr"] = send_hr_intake_card(record)
-        sent["email_conf"] = send_confirmation_email(record)
-        # Add a mock calendar for backward compatibility with old tests if needed
+        tasks = [
+            ("slack_hr", send_hr_intake_card, (record,)),
+            ("email_conf", send_confirmation_email, (record,)),
+        ]
         sent["calendar"] = f"[MOCK] Calendar events scheduled for {_candidate_name(record)}"
-        sent["slack"] = sent["slack_hr"] # fallback for old tests checking 'slack'
-        sent["email"] = sent["email_conf"]  # fallback for old tests checking 'email'
     elif stage == "approved":
-        sent["slack_manager"] = send_manager_dm(record)
-        sent["slack_it"] = send_it_provisioning_request(record)
-        sent["slack_announce"] = send_new_joiners_announcement(record)
-        sent["email_welcome"] = send_welcome_email(record)
-        sent["email_manager"] = send_manager_email(record)
-        sent["email_it"] = send_it_email(record)
+        tasks = [
+            ("slack_manager", send_manager_dm, (record,)),
+            ("slack_it", send_it_provisioning_request, (record,)),
+            ("slack_announce", send_new_joiners_announcement, (record,)),
+            ("email_welcome", send_welcome_email, (record,)),
+            ("email_manager", send_manager_email, (record,)),
+            ("email_it", send_it_email, (record,)),
+        ]
         sent["calendar"] = f"[MOCK] Calendar events scheduled for {_candidate_name(record)}"
-        sent["slack"] = sent["slack_announce"] # fallback for old tests
-        sent["email"] = sent["email_welcome"]  # fallback for old tests
+
+    if tasks:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(tasks)) as executor:
+            future_to_key = {
+                executor.submit(func, *args): key
+                for key, func, args in tasks
+            }
+            # Wait for all tasks with a timeout of 12 seconds
+            concurrent.futures.wait(future_to_key.keys(), timeout=12)
+            
+            for future, key in future_to_key.items():
+                try:
+                    if future.done():
+                        sent[key] = future.result()
+                    else:
+                        # Task did not finish in time
+                        sent[key] = f"[ERROR] Timeout sending notification {key}"
+                        logger.error(f"Timeout sending notification {key}")
+                except Exception as e:
+                    logger.error(f"Error sending notification '{key}': {e}", exc_info=True)
+                    sent[key] = f"[ERROR] Failed to send {key}: {str(e)}"
+
+    if stage == "intake":
+        sent["slack"] = sent.get("slack_hr")
+        sent["email"] = sent.get("email_conf")
+    elif stage == "approved":
+        sent["slack"] = sent.get("slack_announce")
+        sent["email"] = sent.get("email_welcome")
+        
     return sent

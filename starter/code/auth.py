@@ -29,6 +29,6 @@ def get_current_admin(token: str = Depends(oauth2_scheme)):
         role: str = payload.get("role")
         if role != "admin":
             raise credentials_exception
-        return token
+        return payload.get("sub", "admin")
     except JWTError:
         raise credentials_exception
